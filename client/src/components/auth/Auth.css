@@ -1,0 +1,418 @@
+/* Semantic, Wood & Vegetable Theme */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600&family=Indie+Flower&family=Nunito:wght@400;700;900&display=swap');
+
+.rustic-auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: url('../../assets/rustic-bg-final.jpg') no-repeat center center fixed;
+    background-size: cover;
+    /* Dark wood color for margins */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka', sans-serif;
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.rustic-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 1400px;
+    /* Even wider parchment width */
+}
+
+/* Constrain the form inputs to stay narrow in the middle */
+.rustic-wrapper form,
+.rustic-wrapper .mt-4,
+.rustic-wrapper .auth-header,
+.rustic-alert {
+    width: 100%;
+    max-width: 400px;
+    /* Expand inputs slightly (approx 1 inch each side) */
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    /* Ensure overlapping elements respect z-index */
+    z-index: 20;
+    /* Ensure form elements sit ABOVE the massive Google button */
+}
+
+/* Specific shift for inputs/form */
+.rustic-wrapper form {
+    top: -20px;
+    /* Shift up 0.2 inch (from -40px) */
+}
+
+/* Allow Google button to be wider than inputs */
+/* Allow Google button to be wider than inputs */
+/* Allow Google button to be wider than inputs */
+.google-btn-wrapper {
+    position: relative;
+    width: 200px;
+    /* Trimmed even further */
+    height: 30px;
+    /* Trimmed to minimize vertical footprint */
+    margin: 1.5rem auto;
+    /* Restore close spacing */
+    z-index: 10;
+    top: -40px;
+    /* Shift up 0.4 inch */
+}
+
+/* Register Link Positioning */
+.rustic-wrapper p.mt-3 {
+    position: relative;
+    top: -40px;
+    /* Shift up 0.4 inch */
+}
+
+/* 3D Mascot - Peeking */
+.mascot-container {
+    position: absolute;
+    top: -60px;
+    left: -80px;
+    z-index: 10;
+    pointer-events: none;
+    /* Let clicks pass through if it overlaps */
+}
+
+.mascot-img {
+    width: 180px;
+    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.4));
+    transform: rotate(-10deg);
+}
+
+/* Parchment Form - The "Menu Board" */
+.parchment-card {
+    position: relative;
+    width: 100%;
+    background: url('../../assets/rustic-parchment.png') no-repeat center center;
+    background-size: 100% 100%;
+    padding: 90px 70px 80px 70px;
+    /* Generous padding to stay within "paper" area */
+    filter: drop-shadow(0 30px 30px rgba(0, 0, 0, 0.8));
+    text-align: center;
+    color: #3e2723;
+    z-index: 5;
+}
+
+.auth-header {
+    font-family: 'Nunito', sans-serif;
+    color: #36281F;
+    /* Deep Coffee */
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 2rem;
+
+    /* Allow text to be wider */
+    width: 100%;
+    max-width: none;
+}
+
+.auth-header .brand-name {
+    font-size: 2.2rem;
+    /* Bigger */
+    font-weight: 900;
+    /* Bolder (Black weight) */
+    white-space: nowrap;
+    /* Force single line */
+    position: relative;
+    left: -15px;
+    /* Shift right ~0.05 inch (from -20px) */
+    top: -25px;
+    /* Maintain vertical position */
+}
+
+.auth-header .slogan {
+    font-size: 1.1rem;
+    font-weight: 400;
+    font-style: italic;
+    opacity: 0.9;
+    position: relative;
+    top: -35px;
+    /* Shift down 0.2 inch (from -55px) */
+    left: -30px;
+    /* Shift right 0.4 inch (from -70px) */
+}
+
+.auth-header .page-title {
+    font-size: 1.5rem;
+    /* Reduced from 2.2rem */
+    font-weight: 700;
+    margin-top: 10px;
+    position: relative;
+    top: -40px;
+    /* Shift down 0.2 inch (from -60px) */
+    left: -20px;
+    /* Shift left 0.2 inch */
+}
+
+/* Input Fields - "Carved Slots" */
+.rustic-input-group {
+    margin-bottom: 1.2rem;
+    position: relative;
+    width: 100%;
+}
+
+.rustic-field-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.rustic-input {
+    width: 100%;
+    height: 60px;
+    /* Taller pill shape */
+
+    /* Transparent background to let parchment texture show through */
+    background: rgba(0, 0, 0, 0.05);
+    /* Slight darkening to look like a recess */
+
+    border: 1px solid rgba(139, 69, 19, 0.5);
+    /* Semi-transparent brown border */
+    border-radius: 50px;
+    /* Pill shape */
+    padding: 10px 50px 10px 60px;
+    /* Reduced padding (carrot is outside now) */
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.1rem;
+    color: #3e2723;
+    font-weight: 600;
+    outline: none;
+
+    /* Deep Carved Effect */
+    box-shadow:
+        inset 0 3px 6px rgba(0, 0, 0, 0.3),
+        /* Top inner shadow */
+        inset 0 1px 3px rgba(0, 0, 0, 0.2),
+        0 1px 0 rgba(255, 255, 255, 0.4);
+    /* Bottom highlight ("lip") */
+
+    transition: all 0.3s ease;
+}
+
+.rustic-input:focus {
+    background: rgba(0, 0, 0, 0.08);
+    /* Slightly darker on focus */
+    border-color: #d84315;
+    box-shadow:
+        inset 0 3px 6px rgba(0, 0, 0, 0.4),
+        0 0 10px rgba(255, 112, 67, 0.3);
+    /* Glow */
+}
+
+.rustic-input::placeholder {
+    color: #5d4037;
+    opacity: 0.8;
+    font-weight: bold;
+}
+
+/* Icons Generic */
+.rustic-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    /* Full height to manage separator line */
+}
+
+/* Left Icon (Carrot) */
+/* Left Icon (Carrot) */
+.rustic-icon.left {
+    left: -20px;
+    /* Moved left ~0.4 inch from 15px */
+    width: 90px;
+    /* Massive size (approx 1 inch +) */
+    height: 90px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.rustic-icon.left::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: url('../../assets/rustic-carrot-icon.png') no-repeat center center;
+    background-size: contain;
+    transform: rotate(-20deg);
+    /* Tilt */
+    filter: drop-shadow(2px 5px 5px rgba(0, 0, 0, 0.4));
+}
+
+/* Right Icon (Generic) */
+.rustic-icon.right {
+    right: 0;
+    width: 50px;
+    /* Space for icon */
+    border-left: 1px solid rgba(139, 69, 19, 0.3);
+    /* Vertical Separator Line */
+    height: 60%;
+    /* Line doesn't touch top/bottom */
+    color: #8d6e63;
+    font-size: 1.2rem;
+}
+
+/* Eye Button Specifics */
+.rustic-eye-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.3rem;
+    padding: 0;
+    line-height: 1;
+    color: #5d4037;
+    transition: transform 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.rustic-eye-btn:hover {
+    color: #d84315;
+    transform: scale(1.15);
+}
+
+/* Buttons */
+.rustic-btn {
+    width: 100%;
+    padding: 12px;
+    font-family: 'Fredoka', sans-serif;
+    /* Readable bold font */
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.carrot-btn {
+    background: url('../../assets/rustic-carrot-btn.png') no-repeat center center;
+    background-size: 100% 100%;
+    color: #FFFACD;
+    /* Lemon Chiffon */
+    border: none;
+    box-shadow: none;
+    /* Image handles shadow/depth */
+    height: 120px;
+    /* Enlarge carrot significantly */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+    font-weight: bold;
+    font-size: 1.5rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    margin-top: -10px;
+    /* Reduced from 10px to shift up further 0.2 inch */
+    margin-bottom: 20px;
+}
+
+.carrot-btn:hover {
+    filter: brightness(1.1);
+    transform: scale(1.02);
+}
+
+.carrot-btn:active {
+    transform: scale(0.98);
+}
+
+.wood-btn {
+    /* Google Button Wrapper */
+    background: url('../../assets/rustic-google-btn.png') no-repeat center center;
+    background-size: 100% 100%;
+    width: 700px;
+    /* Keep massive visual size */
+    height: 200px;
+    /* Increased from 160px (approx +0.4 inch total) */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* Centered relative to smaller wrapper */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    /* Crucial: Visuals ignore clicks, clicks pass through to layer below if applicable */
+    transition: transform 0.1s;
+    box-shadow: none;
+    /* Remove rectangular shadow ("pavement") */
+    filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.3));
+    /* Shadow that respects transparency */
+    z-index: -1;
+}
+
+.google-btn-wrapper:hover .wood-btn {
+    filter: brightness(1.1) drop-shadow(0 10px 10px rgba(0, 0, 0, 0.3));
+    transform: translate(-50%, calc(-50% - 3px)) scale(1.03);
+    /* Pop up effect with centering */
+}
+
+.wood-btn:active {
+    transform: translate(-50%, -50%) scale(0.98);
+}
+
+.rustic-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: #5d4037;
+    font-weight: bold;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+}
+
+.rustic-link:hover {
+    color: #d84315;
+    border-bottom-color: #d84315;
+}
+
+/* Alert Box */
+.rustic-alert {
+    background: #ffccbc;
+    border: 2px dashed #d84315;
+    color: #bf360c;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.invalid-creds-plank {
+    background: url('../../assets/rustic-error-invalid-creds.png') no-repeat center center;
+    background-size: 100% 100%;
+    width: 650px;
+    height: 200px;
+
+    /* Absolute Positioning to prevent layout shift ("jumping") */
+    position: absolute;
+    top: 105px;
+    /* Shift up 0.2 inch (from 125px) */
+    left: 50%;
+    transform: translateX(-50%);
+
+    filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.3));
+    z-index: 50;
+    /* Increased to sit ABOVE inputs (z-index 20) */
+    pointer-events: none;
+    /* Allows clicks to pass through transparent areas if needed */
+}

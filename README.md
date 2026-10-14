@@ -1,0 +1,103 @@
+# Carrot's Meal Planner
+
+A meal-planning application built with React, Express and MongoDB, with a rustic recipe-notebook style and Carrot and Strawberry characters.
+
+Create a personal meal collection, browse and import public recipes, plan a week of meals, and build a grocery list. The application also includes exports, optional ingredient assistance, Google sign-in, Manager Access and a character mini-game.
+
+**Development status:** under active development. Planner persistence, grocery calculations and responsive layouts need further work. Nutrition estimates are experimental and may not correctly account for ingredient quantities or serving sizes.
+
+Owner and sole project contributor: **Copyrighted-Carrot <belindosamson@gmail.com>**.
+
+## Project structure
+
+```text
+client/       React application, styles and illustrations
+server/       Express API, MongoDB models, services and tests
+scripts/      Repository checks and configuration-helper tests
+```
+
+The client and server have separate package manifests and lockfiles. Run commands from the indicated directory; there is no root npm workspace.
+
+## Local setup
+
+Install Node.js with npm, Git and a development MongoDB instance. Install the locked dependencies from the repository root:
+
+```sh
+npm ci --prefix server
+npm ci --prefix client
+```
+
+Copy `server/.env.example` to `server/.env` if a local file does not already exist. Fill in values for your development resources. Keep the local environment file private; never put server credentials in React/browser configuration.
+
+| Server variable | Purpose |
+| --- | --- |
+| `MONGO_URI` | Development MongoDB connection |
+| `JWT_SECRET` | Strong, independently generated signing secret for user sessions |
+| `PORT` | API port; the development proxy uses port `5000` |
+| `NODE_ENV` | Use `development` locally |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Image-upload configuration |
+| `GOOGLE_CLIENT_ID` | Google OAuth audience; must match the browser client ID |
+| `GEMINI_API_KEY`, `GROQ_API_KEY` | Optional ingredient-provider credentials |
+| `USDA_API_KEY` | Optional nutrition-provider credential |
+| `ADMIN_MASTER_PASSWORD`, `ADMIN_JWT_SECRET` | Independent Manager Access password and signing secret |
+
+Replace required placeholders before starting the API. Leave unused optional provider credentials empty. Provider-assisted actions require appropriate configuration; fallback behavior is still being improved. The browser's public Google OAuth client ID is configured in `client/src/index.js`.
+
+This initial version uses development API addresses in the client source. Copying `client/.env.example` does not change those addresses; deployment requires appropriate API configuration.
+
+Start the server in one terminal:
+
+```sh
+cd server
+npm run dev
+```
+
+Start the client in another terminal:
+
+```sh
+cd client
+npm start
+```
+
+Open `http://localhost:3000` and register a development account. The API listens on `http://localhost:5000` by default. An HTTP response from its root confirms the server is running; it does not confirm database readiness.
+
+## Tests and build
+
+Run from the repository root:
+
+```sh
+node scripts/check-secrets.cjs --worktree
+node --test scripts/check-secrets.test.cjs
+node --test scripts/local-env.test.cjs
+npm --prefix server test -- --runInBand --watch=false
+npm --prefix client run build
+```
+
+Jest tests live under `server/tests/` and `client/src/**/*.test.js`. Automated tests use isolated database/provider doubles and HTTP fixtures; live database, OAuth and upload checks require separate development resources. The production client build is written to the ignored `client/build/` directory.
+
+Files such as `server/test_*.js`, `verify_*.js`, seed, reset, migration and debug scripts are maintenance tools. Some contact external providers or modify a database. Read the selected script before running it; do not run all maintenance scripts as a test suite. `test_auth.js` and `verify_all.js` require `RUN_LIVE_CHECKS=yes` and should target a disposable database. Keep diagnostic output private.
+
+## Configuration helpers
+
+`server/setup_admin_env.js` generates missing Manager secrets without printing them and preserves configured values. `server/update_keys.js` accepts explicit replacement values through its process environment and updates only the requested settings. Editing the ignored server environment file privately is also supported. Restart the API after changing its configuration.
+
+## Repository checks
+
+Install the local Git hooks after cloning:
+
+```sh
+git config --local core.hooksPath .githooks
+```
+
+The pre-commit hook verifies the project owner's Git identity and scans the exact staged content. Pushes are blocked until explicitly enabled by the repository owner. Hooks are local checks and must be installed in each checkout.
+
+Before committing:
+
+```sh
+git status --short
+node scripts/check-secrets.cjs --worktree
+node scripts/check-secrets.cjs --staged
+git diff --cached --check
+```
+
+Commit source code, assets, lockfiles and placeholder environment examples. Keep real credentials, account data, local notes, screenshots, backups, database dumps, dependencies, build output and logs out of Git. Secret scanning supplements manual review; it cannot identify every possible private value.

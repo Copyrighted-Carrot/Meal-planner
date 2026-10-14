@@ -1,0 +1,367 @@
+/* Font Imports */
+/* Nunito is already imported in index.css, so we don't strictly need it here, but good for isolation if needed */
+/* @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&display=swap'); */
+
+/* --- Page Container & Background --- */
+.rustic-page-container {
+  min-height: 100vh;
+  /* background removed entirely to show global background */
+  padding: 20px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+}
+
+@media (min-width: 993px) {
+  .rustic-page-container {
+    padding-left: 90px;
+    /* Space for Carrot Character */
+    padding-right: 200px;
+    /* Space for Sidebar Menu */
+  }
+}
+
+/* --- Title Section --- */
+.rustic-title-container {
+  position: relative;
+  width: 600px;
+  max-width: 90%;
+  margin: 0 auto 40px auto;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.4));
+}
+
+.rustic-title-scroll {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.rustic-title-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-family: 'Nunito', sans-serif;
+  font-size: 2.5rem;
+  color: #3e2723;
+  font-weight: 800;
+  /* Extra Bold for Title */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.4);
+  width: 100%;
+}
+
+/* --- Meal Grid --- */
+.rustic-meal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 30px;
+  padding: 30px;
+  max-width: 1500px;
+  /* Increased max-width slightly to allow for wider content */
+  margin: 0 auto;
+}
+
+/* --- Meal Card --- */
+.rustic-meal-card {
+  position: relative;
+  width: 100%;
+  /* Aspect ratio for the frame roughly - Made taller to fit content */
+  aspect-ratio: 3 / 5.5;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.5));
+}
+
+.rustic-meal-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.6));
+  z-index: 10;
+}
+
+.rustic-card-frame-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  /* Let clicks pass through to buttons */
+  filter: sepia(0.2) contrast(1.1);
+  /* Enhance wood look */
+}
+
+.rustic-card-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  /* Padding to fit Inside the wooden frame borders - Fine-tuned top clearance */
+  padding: 13.5% 12% 10% 12%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: #4e342e;
+}
+
+/* --- Image Frame Area --- */
+.rustic-image-container {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  /* Enforce standard landscape ratio */
+  /* Top half of card */
+  background: rgba(0, 0, 0, 0.05);
+  border: 3px solid #5d4037;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+  /* Important: Prevent flexbox shrinking */
+}
+
+.rustic-meal-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.rustic-meal-card:hover .rustic-meal-photo {
+  transform: scale(1.1);
+}
+
+.rustic-no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #8d6e63;
+  background: #eefebe;
+  /* Light parchment color */
+  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23a1887f' fill-opacity='0.2' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* --- Typography & Info --- */
+.rustic-meal-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.3rem;
+  /* Reduced from 1.6rem */
+  font-weight: 800;
+  /* Extra Bold */
+  margin: 5px 0 2px 0;
+  line-height: 1.1;
+  color: #271c19;
+  flex-shrink: 0;
+  /* Prevent shrinking */
+  /* Handle long titles */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rustic-meal-category {
+  font-size: 0.95rem;
+  /* Reduced from 1.1rem */
+  color: #5d4037;
+  /* Reduced margin */
+  font-weight: 700;
+  flex-shrink: 0;
+  /* Prevent shrinking */
+}
+
+/* --- Nutrition Badges --- */
+.rustic-nutrition-row {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+  /* Prevent shrinking */
+}
+
+.rustic-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.75rem;
+  /* Reduced from 0.85rem */
+  padding: 2px 6px;
+  /* Reduced padding */
+  border-radius: 12px;
+  color: #fff;
+  font-weight: bold;
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.rustic-badge.red {
+  background-color: #c0392b;
+  border: 1px solid #922b21;
+}
+
+.rustic-badge.blue {
+  background-color: #2980b9;
+  border: 1px solid #1f618d;
+}
+
+.rustic-badge.yellow {
+  background-color: #f39c12;
+  border: 1px solid #d35400;
+  color: #fff;
+}
+
+.rustic-badge.green {
+  background-color: #27ae60;
+  border: 1px solid #1e8449;
+}
+
+/* --- Ingredients --- */
+.rustic-ingredients {
+  font-size: 0.95rem;
+  /* Increased from 0.85rem */
+  line-height: 1.2;
+  /* Slightly increased line height for readability */
+  overflow-y: auto;
+  /* Only show scrollbar if content exceeds height */
+  max-height: none;
+  /* remove max-height to let it fill available space */
+  flex-grow: 1;
+  /* Allow to grow to fill remaining space */
+  min-height: 40px;
+  /* Ensure at least some ingredients are visible */
+  width: 100%;
+  margin-bottom: 5px;
+  /* Reduced margin */
+  /* Push buttons down */
+  color: #4e342e;
+  padding-right: 2px;
+  box-sizing: border-box;
+}
+
+/* Custom Scrollbar for Ingredients */
+.rustic-ingredients::-webkit-scrollbar {
+  width: 4px;
+}
+
+.rustic-ingredients::-webkit-scrollbar-track {
+  background: rgba(93, 64, 55, 0.1);
+  border-radius: 2px;
+}
+
+.rustic-ingredients::-webkit-scrollbar-thumb {
+  background: #5d4037;
+  border-radius: 2px;
+}
+
+.rustic-ingredients::-webkit-scrollbar-thumb:hover {
+  background: #3e2723;
+}
+
+/* --- Action Buttons --- */
+.rustic-card-actions {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+  margin-top: 10px;
+  /* Ensure they are above the frame image (z-index handled by content) */
+  flex-shrink: 0;
+  /* Prevent shrinking */
+}
+
+.rustic-btn-small {
+  flex: 1;
+  background-image: url('../assets/rustic-carrot-btn.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border: none;
+  color: #3e2723;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 6px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+  transition: transform 0.1s;
+  background-color: transparent;
+  /* Fallback */
+}
+
+.rustic-btn-small:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.4)) brightness(1.1);
+}
+
+.rustic-btn-small:active {
+  transform: scale(0.95);
+}
+
+.rustic-btn-small.delete svg {
+  stroke: #c0392b;
+}
+
+.rustic-btn-small.delete {
+  color: #922b21;
+}
+
+/* --- Selection Mode --- */
+.rustic-selection-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 20;
+}
+
+.rustic-checkbox {
+  width: 24px;
+  height: 24px;
+  background: white;
+  border: 2px solid #5d4037;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #27ae60;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.rustic-meal-card.selected {
+  transform: scale(0.95);
+  filter: sepia(0.5) drop-shadow(0 0 10px rgba(93, 64, 55, 0.8));
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .rustic-meal-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+
+  .rustic-btn-small {
+    font-size: 0.8rem;
+  }
+}

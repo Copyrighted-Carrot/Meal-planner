@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+echo "Push blocked: publication requires explicit repository-owner approval."
+exit 1

@@ -1,0 +1,539 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@200..1000&display=swap');
+
+/* ========== 🪵 RUSTIC WOOD BUTTONS ========== */
+.sidebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  /* Alignment start for icon+text */
+  gap: 12px;
+  width: 240px;
+  /* Base width */
+  padding: 12px 20px;
+
+  /* Wood Texture */
+  background: url("./assets/wood_texture.png") repeat-x center;
+  background-size: cover;
+  /* Ensure texture covers button */
+
+  border: none;
+  border-radius: 12px;
+
+  /* Text Styling */
+  /* Text Styling */
+  font-family: 'Nunito', sans-serif;
+  font-weight: 1000;
+  /* Max Bold */
+  /* Rounded Sans */
+  /* Cartoon/Rounded style */
+  font-size: 19px;
+  letter-spacing: 0.5px;
+  color: #FFF8E7;
+  /* Cream */
+  /* -webkit-text-stroke: Removed */
+  /* Thick Black Outline */
+  text-shadow: 0 4px 2px rgba(0, 0, 0, 0.5);
+  /* Drop shadow below */
+  text-decoration: none !important;
+  /* Remove link underline */
+
+  /* Depth & Shadows */
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.4),
+    /* Upper highlight */
+    inset 0 -3px 5px rgba(0, 0, 0, 0.3),
+    /* Bottom shadow */
+    0 4px 6px rgba(0, 0, 0, 0.3);
+  /* Drop shadow */
+
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  /* For texture containment */
+}
+
+/* Icon Styling */
+/* Icon Styling */
+.sidebar-btn svg,
+.sidebar-btn img {
+  /* Generic defaults overridden by inline styles */
+  transition: transform 0.2s ease;
+}
+
+.sidebar-btn:hover svg,
+.sidebar-btn:hover img {
+  transform: scale(1.1) rotate(5deg);
+  /* Fun interactive wiggle */
+}
+
+/* Hover State - Lift */
+.sidebar-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  /* color: #1a120b; Removed to keep text light */
+  text-shadow: 0 0 15px #3e2723, 2px 2px 0 #000000;
+  /* Dark Brown Glow */
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.5),
+    inset 0 -3px 5px rgba(0, 0, 0, 0.3),
+    0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Active/Pressed State - Squish */
+.sidebar-btn:active,
+.sidebar-btn.active {
+  transform: translateY(2px) scale(0.98);
+  filter: brightness(0.85);
+  /* Darken to show depth */
+  box-shadow:
+    inset 0 6px 15px rgba(0, 0, 0, 0.8),
+    /* DEEP top shadow */
+    inset 0 0 20px rgba(0, 0, 0, 0.4),
+    /* Overall darkening */
+    0 1px 1px rgba(255, 255, 255, 0.2);
+  /* Slight bottom lip */
+  border: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+/* Maintain the Dark Brown Glow on Active Tab */
+.sidebar-btn.active {
+  color: #ffffff;
+  /* Pop against dark wood */
+  text-shadow: 0 0 25px #5d4037, 3px 3px 0 #000000;
+  /* Intense Glow */
+}
+
+/* Logout Variant - Slightly Reddish/Warn */
+.sidebar-btn.logout {
+  filter: hue-rotate(-15deg);
+  /* Shift towards red */
+}
+
+.sidebar-btn.logout:hover {
+  filter: hue-rotate(-15deg) brightness(1.1);
+}
+
+/* Greeting Header Plank */
+.greeting-plank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 240px;
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  /* Space between greeting and buttons */
+
+  /* Wood Texture */
+  background: url("./assets/wood_texture.png") repeat-x center;
+  background-size: cover;
+
+  border-radius: 12px;
+
+  /* Text */
+  /* Text */
+  font-family: 'Nunito', sans-serif;
+  font-weight: 1000;
+  font-size: 19px;
+  letter-spacing: 0.5px;
+  color: #FFF8E7;
+  /* Cream */
+  /* -webkit-text-stroke: Removed */
+  text-shadow: 0 4px 2px rgba(0, 0, 0, 0.5);
+
+  /* Depth */
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.4),
+    0 4px 6px rgba(0, 0, 0, 0.3);
+
+  cursor: pointer;
+  /* Interaction enabled */
+  user-select: none;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* Bouncy */
+}
+
+/* Greeting Interaction - Wobble */
+.greeting-plank:hover {
+  transform: scale(1.03) rotate(-1deg);
+}
+
+.greeting-plank:active {
+  transform: scale(0.95) rotate(2deg);
+}
+
+/* Responsiveness: Hide fixed sidebar on smaller screens */
+@media (max-width: 992px) {
+  .sidebar-btn {
+    display: none;
+  }
+}
+
+/* ========== 🌟 GENERAL STYLES ========== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#root,
+.App {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Logo Styling */
+.app-logo {
+  width: 100px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Background Styling */
+body {
+  background-image: url("./assets/food-route.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Prevents Horizontal Scrolling */
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* ========== 🥕 GUIDING CARROT STYLES ========== */
+/* ========== 🥕 GUIDING CARROT STYLES ========== */
+.carrot-guide {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 120px;
+  height: auto;
+  animation: bounce 1.5s infinite;
+  filter: drop-shadow(0px 0px 35px rgba(255, 120, 0, 1));
+  /* Glowing effect */
+  z-index: 1000;
+  cursor: pointer;
+  /* Make carrot clickable */
+  transition: filter 0.3s ease;
+  /* Smooth transition for glow effect */
+}
+
+/* Enhanced glow on hover */
+.carrot-guide:hover {
+  filter: drop-shadow(0px 0px 45px rgba(255, 120, 0, 1));
+}
+
+/* Carrot Bounce Animation */
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Carrot Wiggle Animation */
+@keyframes wiggle {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-10deg);
+  }
+
+  50% {
+    transform: rotate(10deg);
+  }
+
+  75% {
+    transform: rotate(-5deg);
+  }
+}
+
+/* Apply wiggle animation on active state (when clicked) */
+.carrot-guide:active {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+/* Carrot exit animation */
+@keyframes carrotExit {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(20px) rotate(15deg);
+  }
+}
+
+.carrot-guide.exit {
+  animation: carrotExit 0.5s forwards;
+}
+
+/* ========== 🥕 CARROT'S THOUGHT BUBBLE ========== */
+.carrot-bubble {
+  position: fixed;
+  bottom: 115px;
+  /* Lowered significantly */
+  left: 125px;
+  /* Shifted left to touch/overlap carrot */
+  background: white;
+  border-radius: 15px;
+  padding: 12px;
+  max-width: 250px;
+  font-weight: bold;
+  color: #ff7f00;
+  box-shadow: 0px 5px 15px rgba(255, 127, 0, 0.4);
+  z-index: 1000;
+  border: 2px solid #ff7f00;
+}
+
+/* Thought Bubble Tail for Carrot (Left Side) */
+
+
+/* ========== 🍓 COPYRIGHTED STRAWBERRY STYLES ========== */
+.strawberry-guide {
+  position: fixed;
+  /* Strawberry replaces carrot in same spot */
+  bottom: 20px;
+  left: 20px;
+  width: 100px;
+  animation: bounce 1.5s infinite;
+  filter: drop_shadow(0px 0px 25px rgba(255, 0, 127, 1));
+  /* Glowing pink effect */
+  cursor: pointer;
+  /* Make strawberry clickable */
+  transition: filter 0.3s ease, transform 0.3s ease;
+  /* Smooth transitions */
+  z-index: 1000;
+}
+
+/* Enhanced glow on hover */
+.strawberry-guide:hover {
+  filter: drop-shadow(0px 0px 40px rgba(255, 0, 127, 1));
+  transform: scale(1.05);
+}
+
+/* Apply wiggle animation on active state (when clicked) */
+.strawberry-guide:active {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+/* Strawberry Fade-in Effect - Enhanced */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) rotate(-15deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Strawberry battle mode entrance */
+@keyframes battleEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateX(50px) rotate(-30deg);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.2) translateX(0) rotate(15deg);
+  }
+
+  80% {
+    transform: scale(0.9) rotate(-5deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.strawberry-guide.battle-mode {
+  animation: battleEntrance 0.8s forwards, pulseGlow 2s infinite 0.8s;
+  right: 20px;
+  /* Position where carrot was */
+}
+
+/* Pulsing glow for battle mode */
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    filter: drop-shadow(0px 0px 25px rgba(255, 0, 127, 0.8));
+  }
+
+  50% {
+    filter: drop-shadow(0px 0px 45px rgba(255, 0, 127, 1));
+  }
+}
+
+/* ========== 🍓 STRAWBERRY'S THOUGHT BUBBLE ========== */
+.strawberry-bubble {
+  position: fixed;
+  bottom: 115px;
+  left: 125px;
+  background: white;
+  border-radius: 15px;
+  padding: 12px;
+  max-width: 250px;
+  font-weight: bold;
+  color: #d6003d;
+  box-shadow: 0px 5px 15px rgba(214, 0, 61, 0.4);
+  z-index: 1000;
+  border: 2px solid #d6003d;
+}
+
+/* Thought Bubble Tail REMOVED as per request */
+
+/* ========== 📜 MENU & QUIZ STYLING ========== */
+.carrot-menu,
+.carrot-quiz {
+  position: fixed;
+  bottom: 115px;
+  left: 125px;
+  background: linear-gradient(135deg, #ffdb99 0%, #ff8c69 100%);
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  z-index: 1000;
+  border: 2px solid #ff6347;
+  /* Carrot-colored border */
+  min-width: 200px;
+}
+
+/* Menu Buttons Styling */
+.carrot-menu button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: white;
+  color: #e76f51;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.carrot-menu button:hover {
+  transform: scale(1.02);
+  background: #fff0f0;
+}
+
+/* Next Stop Buttons Container */
+.next-stop {
+  position: fixed;
+  bottom: 15px;
+  /* Pushed way down */
+  left: 125px;
+  background: white;
+  padding: 15px;
+  /* Increased padding */
+  border-radius: 12px;
+  border: 2px solid #28a745;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  z-index: 1002;
+  min-width: 200px;
+  /* Slightly wider */
+}
+
+.next-stop button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
+  border-radius: 5px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.next-stop button:first-child {
+  background-color: #28a745;
+  color: white;
+}
+
+.next-stop button:last-child {
+  background-color: #6c757d;
+  color: white;
+}
+
+/* Adding strawberry elements */
+.carrot-menu::before,
+.carrot-quiz::before {
+  content: "🥕";
+  margin-right: 5px;
+}
+
+.carrot-menu::after,
+.carrot-quiz::after {
+  content: "🍓";
+  margin-left: 5px;
+}
+
+/* Optional: Add strawberry accents */
+.carrot-menu h3,
+.carrot-quiz h3 {
+  color: #c51f5d;
+  /* Strawberry red */
+}
+
+.carrot-menu p,
+.carrot-quiz p {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.carrot-menu button,
+.carrot-quiz button {
+  margin: 5px;
+  padding: 8px 15px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* ========== 🎨 NAVBAR STYLING ========== */
+.custom-navbar {
+  /* Let JS inline styles control dimensions */
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+.navbar-nav .nav-item .btn {
+  color: white !important;
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+}
+
+.navbar-nav .nav-item .btn:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
