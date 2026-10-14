@@ -8,6 +8,12 @@ const getUserMeals = async (userId) => {
     return await Meal.find({ user: userId }).sort({ createdAt: -1 });
 };
 
+const getMeal = async (userId, mealId) => {
+    const meal = await Meal.findById(mealId);
+    checkOwnership(meal, userId);
+    return meal;
+};
+
 const createMeal = async (userId, data, file) => {
     const { name, ingredients, category, cropX, cropY, cropWidth, cropHeight } = data;
     let imageUrl = file ? file.path : "";
@@ -127,7 +133,7 @@ const suggestMeals = async (ingredients) => {
 
 const copyGlobalMeal = async (userId, mealId) => {
     const meal = await Meal.findById(mealId);
-    if (!meal) throw new AppError("Meal not found", 404);
+    if (!meal || meal.isGlobal !== true) throw new AppError("Meal not found", 404);
 
     const newMeal = new Meal({
         name: meal.name,
@@ -156,6 +162,7 @@ const deleteMeal = async (userId, mealId) => {
 };
 
 module.exports = {
+    getMeal,
     getUserMeals,
     createMeal,
     updateMeal,

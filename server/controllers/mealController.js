@@ -2,6 +2,15 @@ const mealService = require("../services/mealService");
 const calculateNutrition = require("../utils/nutritionCalculator");
 const asyncHandler = require("../utils/asyncHandler");
 
+const getMeal = asyncHandler(async (req, res) => {
+    res.json(await mealService.getMeal(req.user.id, req.params.id));
+});
+
+const requireOwnedMeal = asyncHandler(async (req, res, next) => {
+    await mealService.getMeal(req.user.id, req.params.id);
+    next();
+});
+
 const getUserMeals = asyncHandler(async (req, res) => {
     const meals = await mealService.getUserMeals(req.user.id);
     res.json(meals);
@@ -56,6 +65,8 @@ const testNutrition = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+    getMeal,
+    requireOwnedMeal,
     getUserMeals,
     createMeal,
     updateMeal,

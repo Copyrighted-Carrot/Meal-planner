@@ -8,7 +8,7 @@ const { createMealValidator } = require("../middleware/validators/mealValidator"
 const { validateObjectId } = require("../middleware/validators/commonValidator");
 
 // DEBUG ROUTE
-router.get("/test-nutrition", mealController.testNutrition);
+router.get("/test-nutrition", requireAuth, mealController.testNutrition);
 
 // Routes
 router.get("/", requireAuth, mealController.getUserMeals);
@@ -25,8 +25,10 @@ router.post(
 router.put(
     "/:id",
     requireAuth,
-    upload.single('image'),
     validateObjectId('id'),
+    validate,
+    mealController.requireOwnedMeal,
+    upload.single('image'),
     createMealValidator,
     validate,
     mealController.updateMeal
@@ -44,6 +46,8 @@ router.delete(
 router.get("/global", requireAuth, mealController.getGlobalMeals);
 router.post("/import-starter-pack", requireAuth, mealController.importStarterPack);
 router.post("/suggest", requireAuth, mealController.suggestMeals);
+
+router.get('/:id', requireAuth, validateObjectId('id'), validate, mealController.getMeal);
 
 router.post(
     "/copy/:id",
