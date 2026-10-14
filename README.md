@@ -43,7 +43,7 @@ Copy `server/.env.example` to `server/.env` if a local file does not already exi
 
 Replace required placeholders before starting the API. Leave unused optional provider credentials empty. Provider-assisted actions require appropriate configuration; fallback behavior is still being improved. The browser's public Google OAuth client ID is configured in `client/src/index.js`.
 
-This initial version uses development API addresses in the client source. Copying `client/.env.example` does not change those addresses; deployment requires appropriate API configuration.
+`client/.env.example` documents `REACT_APP_API_BASE_URL`. Its default `/api` uses the website's origin. CRA's development proxy forwards these requests to port 5000 during `npm start`; the proxy is not part of a production build. A same-origin deployment must route `/api` to Express. For a separate API host, set an HTTPS URL ending in `/api` in `client/.env.local` before building. Restart the development server or rebuild after changing browser configuration.
 
 Start the server in one terminal:
 
@@ -70,6 +70,7 @@ node scripts/check-secrets.cjs --worktree
 node --test scripts/check-secrets.test.cjs
 node --test scripts/local-env.test.cjs
 npm --prefix server test -- --runInBand --watch=false
+npm --prefix client test -- --watchAll=false --runInBand
 npm --prefix client run build
 ```
 

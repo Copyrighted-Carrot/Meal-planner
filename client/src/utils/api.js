@@ -1,50 +1,35 @@
 import axios from 'axios';
+import { resolveApiBaseUrl } from './apiConfig';
+import { captureSession, isCurrentSession, setSessionToken, sessionChangedError } from './session';
 
-const api = axios.create({
-    baseURL: 'http://localhost:5000/api'
+const baseURL = resolveApiBaseUrl();
+const api = axios.create({ baseURL });
+// Manager authentication stays separate; it shares only the configured address.
+export const adminApi = axios.create({ baseURL });
+
+api.interceptors.request.use(config => {
+    if (!/^\/(?!\/)/.test(config.url || '') || config.baseURL !== baseURL) {
+        throw new Error('Application API requests must use the configured API address.');
+    }
+    config.session = captureSession();
+    config.skipAuth = config.skipAuth === true || /^\/auth\/(?:login|register|google)$/.test(config.url);
+    config.headers.delete('x-auth-token');
+    if (!config.skipAuth && config.session.token) config.headers.set('x-auth-token', config.session.token);
+    return config;
 });
 
-// Request Interceptor: Attach Token
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers['x-auth-token'] = token;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
-
-// Response Interceptor: Handle Errors
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        // Standardize error message from backend AppError
-        let errorMessage = 'Something went wrong';
-        if (error.response?.data) {
-            if (typeof error.response.data === 'string') errorMessage = error.response.data;
-            else if (error.response.data.message) errorMessage = error.response.data.message;
-            else if (error.response.data.msg) errorMessage = error.response.data.msg;
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-
-        const customError = {
-            message: errorMessage,
-            statusCode: error.response?.status,
-            originalError: error
-        };
-
-        // Auto-logout on 401 (Invalid/Expired Token)
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            // Optional: Redirect to login or dispatch logout action if accessible
-            // window.location.href = '/login'; 
-        }
-
-        return Promise.reject(customError);
-    }
-);
+api.interceptors.response.use(response => {
+    if (!response.config.skipAuth && !isCurrentSession(response.config.session)) throw sessionChangedError();
+    return response;
+}, error => {
+    const config = error.config;
+    if (config?.session && !config.skipAuth && !isCurrentSession(config.session)) return Promise.reject(sessionChangedError());
+    // Never retain Axios request/response objects: they can contain credentials.
+    const failure = new Error(error.response?.data?.message || error.response?.data?.msg || (axios.isCancel(error) ? 'Request cancelled.' : 'Unable to complete the request. Please try again.'));
+    failure.statusCode = error.response?.status;
+    failure.code = axios.isCancel(error) ? 'REQUEST_CANCELLED' : 'API_ERROR';
+    if (config?.session && !config.skipAuth && failure.statusCode === 401 && isCurrentSession(config.session)) setSessionToken(null);
+    return Promise.reject(failure);
+});
 
 export default api;

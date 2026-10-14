@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { adminApi as axios } from '../utils/api';
 
 const UserManagement = ({ styles }) => {
     const [users, setUsers] = useState([]);
@@ -25,7 +25,7 @@ const UserManagement = ({ styles }) => {
     const fetchUserDetails = async (userId) => {
         setLoadingDetails(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/admin/users/${userId}/details`, {
+            const res = await axios.get(`/admin/users/${userId}/details`, {
                 headers: { 'x-admin-token': token }
             });
             setUserDetails(res.data);
@@ -41,7 +41,7 @@ const UserManagement = ({ styles }) => {
 
     const fetchUsers = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/users', {
+            const res = await axios.get('/admin/users', {
                 headers: { 'x-admin-token': token }
             });
             setUsers(res.data);
@@ -57,19 +57,19 @@ const UserManagement = ({ styles }) => {
         setActionLoading(true);
         try {
             if (action === 'delete') {
-                await axios.delete(`http://localhost:5000/api/admin/users/${userId}`, {
+                await axios.delete(`/admin/users/${userId}`, {
                     headers: { 'x-admin-token': token }
                 });
                 alert('User Deleted');
                 fetchUsers(); // Refresh
             } else if (action === 'suspend') {
-                await axios.put(`http://localhost:5000/api/admin/users/${userId}`, {
+                await axios.put(`/admin/users/${userId}`, {
                     isSuspended: true,
                     suspensionReason: "Admin Action"
                 }, { headers: { 'x-admin-token': token } });
                 fetchUsers();
             } else if (action === 'activate') {
-                await axios.put(`http://localhost:5000/api/admin/users/${userId}`, {
+                await axios.put(`/admin/users/${userId}`, {
                     isSuspended: false
                 }, { headers: { 'x-admin-token': token } });
                 fetchUsers();
@@ -84,7 +84,7 @@ const UserManagement = ({ styles }) => {
     const handleSaveEdit = async () => {
         setActionLoading(true);
         try {
-            await axios.put(`http://localhost:5000/api/admin/users/${selectedUser._id}`, {
+            await axios.put(`/admin/users/${selectedUser._id}`, {
                 adminNotes: editForm.adminNotes,
                 suspensionReason: editForm.suspensionReason, // update this if suspended
                 password: editForm.newPassword // Only sends if not empty
@@ -116,7 +116,7 @@ const UserManagement = ({ styles }) => {
         if (!window.confirm("⚠️ ARMAGEDDON PROTOCOL: This will wipe ALL meal plans for this user. They will have to regenerate. Proceed?")) return;
         setActionLoading(true);
         try {
-            await axios.delete(`http://localhost:5000/api/admin/users/${selectedUser._id}/plans`, {
+            await axios.delete(`/admin/users/${selectedUser._id}/plans`, {
                 headers: { 'x-admin-token': token }
             });
             alert("Meal Plans Wiped. User is now a blank slate.");
@@ -410,7 +410,7 @@ const UserManagement = ({ styles }) => {
                                                         onClick={async () => {
                                                             if (!window.confirm(`Login as ${selectedUser.name}? You will need to re-login as Admin later.`)) return;
                                                             try {
-                                                                const res = await axios.post(`http://localhost:5000/api/admin/users/${selectedUser._id}/impersonate`, {}, {
+                                                                const res = await axios.post(`/admin/users/${selectedUser._id}/impersonate`, {}, {
                                                                     headers: { 'x-admin-token': token }
                                                                 });
                                                                 // HIJACK SESSION

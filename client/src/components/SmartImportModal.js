@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from '../utils/api';
 
 function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
     const [ingredients, setIngredients] = useState("");
@@ -13,7 +13,7 @@ function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
         if (!ingredients.trim()) return;
         setLoading(true);
         try {
-            const res = await axios.post("http://localhost:5000/api/meals/suggest", { ingredients });
+            const res = await api.post("/meals/suggest", { ingredients });
             setSuggestions(res.data);
         } catch (err) {
             console.error("Error fetching suggestions:", err);
@@ -26,7 +26,7 @@ function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
     const handleAdd = async (mealId) => {
         setAddingId(mealId);
         try {
-            await axios.post(`http://localhost:5000/api/meals/copy/${mealId}`);
+            await api.post(`/meals/copy/${mealId}`);
             onImport(); // Check to refresh main list if needed
             alert("Meal added! 🥗");
         } catch (err) {

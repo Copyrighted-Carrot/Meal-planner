@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from '../utils/api';
 import { useNavigate } from "react-router-dom";
 import MealCard from "./Rustic/MealCard";
 import MealListTitle from "./Rustic/MealListTitle";
@@ -14,9 +14,7 @@ function MealList() {
   useEffect(() => {
     async function fetchMeals() {
       try {
-        const response = await axios.get("http://localhost:5000/api/meals", {
-          headers: { 'x-auth-token': localStorage.getItem('token') }
-        });
+        const response = await api.get("/meals");
         setMeals(response.data);
       } catch (error) {
         console.error("Error fetching meals:", error);
@@ -28,9 +26,7 @@ function MealList() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this meal?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/meals/${id}`, {
-        headers: { 'x-auth-token': localStorage.getItem('token') }
-      });
+      await api.delete(`/meals/${id}`);
       setMeals(meals.filter((meal) => meal._id !== id));
     } catch (error) {
       console.error("Error deleting meal:", error);
@@ -74,9 +70,7 @@ function MealList() {
     try {
       // Sequentially delete (could be parallelized but safer sequential for rate limits)
       for (const id of selectedIds) {
-        await axios.delete(`http://localhost:5000/api/meals/${id}`, {
-          headers: { 'x-auth-token': localStorage.getItem('token') }
-        });
+        await api.delete(`/meals/${id}`);
       }
 
       // Update local state

@@ -1,11 +1,11 @@
 import React from "react";
-import axios from "axios";
+import api from '../utils/api';
 
 function MealItem({ meal, setMeals }) {
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this meal?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/meals/${meal._id}`);
+        await api.delete(`/meals/${meal._id}`);
         setMeals((prevMeals) => prevMeals.filter((m) => m._id !== meal._id));
       } catch (error) {
         console.error("Error deleting meal:", error);

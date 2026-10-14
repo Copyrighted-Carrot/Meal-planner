@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // Use raw axios to avoid interceptors
+import { adminApi as axios } from '../utils/api';
 
 const ShadowLogin = () => {
     const [password, setPassword] = useState('');
@@ -14,8 +14,8 @@ const ShadowLogin = () => {
         setError('');
 
         try {
-            // Hardcoded URL to avoid global API interceptors and proxy issues
-            const res = await axios.post('http://localhost:5000/api/admin/login', { password });
+            // Manager requests share API configuration without user-session interceptors.
+            const res = await axios.post('/admin/login', { password });
 
             if (res.data.token) {
                 // Store in SESSION storage (clears when tab closes)

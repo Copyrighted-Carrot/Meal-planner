@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { useCarrot } from '../../context/CarrotContext';
 import iconBasket from '../../assets/icon-basket.svg';
 import { parseIngredient, formatIngredient } from '../../utils/ingredientParser';
@@ -166,10 +166,8 @@ function IngredientManager({ ingredients, onChange }) {
         setIsParsing(true);
         try {
             // Call AI Endpoint
-            const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/ai/parse',
-                { text: bulkText },
-                { headers: { 'x-auth-token': token } }
+            const res = await api.post('/ai/parse',
+                { text: bulkText }
             );
 
             if (res.data && Array.isArray(res.data)) {

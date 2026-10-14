@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { adminApi as axios } from '../../utils/api';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
@@ -19,7 +19,7 @@ const AdminDashboard = () => {
 
     const fetchStats = async (token) => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/stats', {
+            const res = await axios.get('/admin/stats', {
                 headers: { 'x-admin-token': token }
             });
             setStats(res.data);

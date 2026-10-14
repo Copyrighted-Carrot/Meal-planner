@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from '../utils/api';
 
 function StarterPackModal({ isOpen, onClose, onImport, onSwitch }) {
     const [loading, setLoading] = useState(false);
@@ -9,7 +9,7 @@ function StarterPackModal({ isOpen, onClose, onImport, onSwitch }) {
     const handleImport = async () => {
         setLoading(true);
         try {
-            await axios.post("http://localhost:5000/api/meals/import-starter-pack");
+            await api.post("/meals/import-starter-pack");
             onImport(); // Refresh parent state
             onClose();
             alert("Starter pack imported! 🎉");

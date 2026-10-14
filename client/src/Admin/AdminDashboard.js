@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { adminApi as axios } from '../utils/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid, Legend, AreaChart, Area } from 'recharts';
 import UserManagement from './UserManagement'; // USER COCKPIT
 
@@ -58,7 +58,7 @@ const AdminDashboard = () => {
 
     const fetchStats = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/stats', { headers: { 'x-admin-token': token } });
+            const res = await axios.get('/admin/stats', { headers: { 'x-admin-token': token } });
             setStats(res.data);
             setLoading(false);
         } catch (err) {
@@ -68,9 +68,9 @@ const AdminDashboard = () => {
 
     const fetchHistory = async (service) => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/admin/history?service=${service}`, { headers: { 'x-admin-token': token } });
+            const res = await axios.get(`/admin/history?service=${service}`, { headers: { 'x-admin-token': token } });
             setHistory(res.data);
-            const errRes = await axios.get(`http://localhost:5000/api/admin/errors?service=${service}`, { headers: { 'x-admin-token': token } });
+            const errRes = await axios.get(`/admin/errors?service=${service}`, { headers: { 'x-admin-token': token } });
             setErrors(errRes.data);
         } catch (err) {
             console.error("Failed to fetch history");
@@ -251,7 +251,7 @@ const CloudinaryDetailView = ({ stats, history, range }) => {
         if (!showGallery && images.length === 0) {
             setLoadingImages(true);
             try {
-                const res = await axios.get('http://localhost:5000/api/admin/images', { headers: { 'x-admin-token': token } });
+                const res = await axios.get('/admin/images', { headers: { 'x-admin-token': token } });
                 setImages(res.data);
             } catch (err) {
                 console.error("Gallery Error", err);
