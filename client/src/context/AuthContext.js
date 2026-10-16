@@ -1,177 +1,80 @@
-import React, { createContext, useReducer, useEffect } from "react";
-import api from "../utils/api";
+import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
+import api from '../utils/api';
+import { captureSession, isCurrentSession, setSessionToken, subscribeSession, sessionChangedError } from '../utils/session';
 
-const initialState = {
-    token: localStorage.getItem("token"),
-    isAuthenticated: null,
-    loading: true,
-    user: null,
-};
+export const AuthContext = createContext({ isAuthenticated: false, loading: true, user: null });
 
-export const AuthContext = createContext(initialState);
+export function AuthProvider({ children }) {
+    const [session, setSession] = useState(captureSession);
+    const [identity, setIdentity] = useState(null);
+    const attempt = useRef(0);
 
-const authReducer = (state, action) => {
-    switch (action.type) {
-        case "USER_LOADED":
-            return {
-                ...state,
-                isAuthenticated: true,
-                loading: false,
-                user: action.payload,
-            };
-        case "REGISTER_SUCCESS":
-        case "LOGIN_SUCCESS":
-            localStorage.setItem("token", action.payload.token);
-            return {
-                ...state,
-                ...action.payload,
-                isAuthenticated: true,
-                loading: false,
-            };
-        case "REGISTER_FAIL":
-        case "AUTH_ERROR":
-        case "LOGIN_FAIL":
-        case "LOGOUT":
-            localStorage.removeItem("token");
-            return {
-                ...state,
-                token: null,
-                isAuthenticated: false,
-                loading: false,
-                user: null,
-            };
-        default:
-            return state;
-    }
-};
-
-export const AuthProvider = ({ children }) => {
-    const [state, dispatch] = useReducer(authReducer, initialState);
-
-    // Load User & Idle Timer
     useEffect(() => {
-        const loadUser = async () => {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                dispatch({ type: "AUTH_ERROR" });
-                return;
-            }
+        const unsubscribe = subscribeSession(next => { setIdentity(null); setSession(next); });
+        setSession(current => isCurrentSession(current) ? current : captureSession());
+        return unsubscribe;
+    }, []);
 
-            try {
-                const res = await api.get("/auth/user");
-                dispatch({
-                    type: "USER_LOADED",
-                    payload: res.data,
-                });
-            } catch (err) {
-                dispatch({ type: "AUTH_ERROR" });
-            }
-        };
-
-        loadUser();
-    }, [state.token]);
-
-    // Idle Timer Logic (Logout after 1h inactivity)
     useEffect(() => {
-        if (!state.isAuthenticated) return;
+        if (!session.token) return;
+        const controller = new AbortController();
+        let active = true;
+        api.get('/auth/user', { signal: controller.signal }).then(response => {
+            if (!active || !isCurrentSession(session)) return;
+            const user = response.data;
+            if (!user || typeof (user.id || user._id) !== 'string') throw new Error('Invalid account response');
+            setIdentity({ session, user });
+        }).catch(() => {
+            if (active && isCurrentSession(session)) setSessionToken(null);
+        });
+        return () => { active = false; controller.abort(); };
+    }, [session]);
 
-        let timeoutId;
-        const TIMEOUT_DURATION = 60 * 60 * 1000; // 1 Hour
+    const logout = useCallback(() => {
+        attempt.current += 1;
+        setSessionToken(null);
+    }, []);
 
+    const authenticate = useCallback(async (path, data) => {
+        const currentAttempt = ++attempt.current;
+        setSessionToken(null);
+        const started = captureSession();
+        const response = await api.post(path, data, { skipAuth: true });
+        if (attempt.current !== currentAttempt || !isCurrentSession(started)) throw sessionChangedError();
+        if (typeof response.data?.token !== 'string' || !response.data.token) throw new Error('Sign-in did not return a session.');
+        setSessionToken(response.data.token);
+    }, []);
+
+    const user = identity && isCurrentSession(identity.session) ? identity.user : null;
+    const token = session.token;
+    const isAuthenticated = Boolean(user);
+    const loading = Boolean(token && !user);
+    const sessionId = String(session.revision) + ':' + (user?.id || user?._id || (token ? 'pending' : 'guest'));
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        let timeout;
         const resetTimer = () => {
-            if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                alert("Session Expired. Please log in again.");
-                dispatch({ type: "LOGOUT" });
-                window.location.href = '/login';
-            }, TIMEOUT_DURATION);
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                logout();
+                alert('Session Expired. Please log in again.');
+            }, 60 * 60 * 1000);
         };
-
-        // Listeners for activity
         const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
-        const handleActivity = () => resetTimer();
-
-        // Initial start
         resetTimer();
-
-        // Attach listeners
-        events.forEach(event => document.addEventListener(event, handleActivity));
-
-        // Cleanup
+        events.forEach(event => document.addEventListener(event, resetTimer));
         return () => {
-            if (timeoutId) clearTimeout(timeoutId);
-            events.forEach(event => document.removeEventListener(event, handleActivity));
+            clearTimeout(timeout);
+            events.forEach(event => document.removeEventListener(event, resetTimer));
         };
-    }, [state.isAuthenticated]);
+    }, [isAuthenticated, sessionId, logout]);
 
-    // Register User
-    const register = async (formData) => {
-        try {
-            const res = await api.post("/auth/register", formData);
-            dispatch({
-                type: "REGISTER_SUCCESS",
-                payload: res.data,
-            });
-        } catch (err) {
-            dispatch({
-                type: "REGISTER_FAIL",
-                payload: err.message, // api.js interceptor formats this
-            });
-            throw err;
-        }
-    };
-
-    // Login User
-    const login = async (formData) => {
-        try {
-            const res = await api.post("/auth/login", formData);
-            dispatch({
-                type: "LOGIN_SUCCESS",
-                payload: res.data,
-            });
-        } catch (err) {
-            dispatch({
-                type: "LOGIN_FAIL",
-                payload: err.message, // api.js interceptor formats this
-            });
-            throw err;
-        }
-    };
-
-    // Google Login
-    const googleLogin = async (credential) => {
-        try {
-            const res = await api.post("/auth/google", { credential });
-            dispatch({
-                type: "LOGIN_SUCCESS",
-                payload: res.data,
-            });
-        } catch (err) {
-            dispatch({
-                type: "LOGIN_FAIL",
-                payload: err.message || "Google Login failed",
-            });
-            throw err;
-        }
-    };
-
-    // Logout
-    const logout = () => dispatch({ type: "LOGOUT" });
-
-    return (
-        <AuthContext.Provider
-            value={{
-                token: state.token,
-                isAuthenticated: state.isAuthenticated,
-                loading: state.loading,
-                user: state.user,
-                register,
-                login,
-                googleLogin,
-                logout,
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
-    );
-};
+    return <AuthContext.Provider value={{
+        token, user, isAuthenticated, loading, sessionId,
+        login: data => authenticate('/auth/login', data),
+        register: data => authenticate('/auth/register', data),
+        googleLogin: credential => authenticate('/auth/google', { credential }),
+        logout
+    }}>{children}</AuthContext.Provider>;
+}

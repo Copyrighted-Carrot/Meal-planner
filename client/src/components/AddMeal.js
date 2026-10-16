@@ -3,6 +3,8 @@ import ReactDOM from "react-dom";
 import api from "../utils/api";
 import { useLocation, useNavigate } from "react-router-dom"; // Import hooks
 import { useCarrot } from "../context/CarrotContext";
+import { useUserData } from '../context/UserDataContext';
+import { captureSession, isCurrentSession } from '../utils/session';
 
 import ParchmentContainer from "./Rustic/ParchmentContainer";
 import InputPlank from "./Rustic/InputPlank";
@@ -27,35 +29,51 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
   const [meal, setMeal] = useState({
     name: draftMeal?.name || "",
     ingredients: draftMeal?.ingredients || "",
-    category: draftMeal?.category || ""
+    category: draftMeal?.category || "",
+    imageCrop: draftMeal?.imageCrop
   });
   const [image, setImage] = useState(draftMeal?.image || null);
   const [previewUrl, setPreviewUrl] = useState(draftMeal?.previewUrl || null);
   const [editId, setEditId] = useState(null); // ID of meal being edited
+  const [editLoading, setEditLoading] = useState(false);
+  const redirectTimer = React.useRef(null);
+  const { assertSession, refreshMeals } = useUserData();
   const [imageRejected, setImageRejected] = useState(false); // Track if overly large image was rejected
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState(null);
 
   const { say } = useCarrot();
+  const sayRef = React.useRef(say);
+  sayRef.current = say;
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Check for Edit Mode on Mount
-  useEffect(() => {
-    if (location.state && location.state.mealToEdit) {
-      const mealToEdit = location.state.mealToEdit;
-      setMeal({
-        name: mealToEdit.name,
-        ingredients: Array.isArray(mealToEdit.ingredients) ? mealToEdit.ingredients.join(', ') : mealToEdit.ingredients,
-        category: mealToEdit.category
-      });
-      setEditId(mealToEdit._id);
-      setPreviewUrl(mealToEdit.imageUrl);
+  useEffect(() => () => clearTimeout(redirectTimer.current), []);
 
-      say(`🥕 Editing ${mealToEdit.name}? Let's make it better!`, "carrot");
-    }
-  }, [location.state]); // Only run when location state changes
+  // Browser history carries only an ID; the API verifies ownership before reading.
+  useEffect(() => {
+    const mealId = location.state?.mealId || location.state?.mealToEdit?._id;
+    if (!mealId) return;
+    let active = true;
+    const controller = new AbortController();
+    setEditLoading(true);
+    api.get(`/meals/${mealId}`, { signal: controller.signal }).then(({ data }) => {
+      if (!active) return;
+      assertSession();
+      setMeal({ name: data.name, ingredients: Array.isArray(data.ingredients) ? data.ingredients.join(', ') : data.ingredients, category: data.category });
+      setImage(null);
+      setEditId(data._id);
+      setPreviewUrl(data.imageUrl);
+      setEditLoading(false);
+      sayRef.current(`🥕 Editing ${data.name}? Let's make it better!`, 'carrot');
+    }).catch(error => {
+      if (active && error.code !== 'SESSION_CHANGED' && error.code !== 'REQUEST_CANCELLED' && error.statusCode !== 401) {
+        navigate('/available-meals', { replace: true, state: null });
+      }
+    });
+    return () => { active = false; controller.abort(); };
+  }, [location.state, assertSession, navigate]);
 
   const handleRemoveImage = () => {
     setImage(null);
@@ -107,7 +125,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
     // We'll store the crop data in a new state
     console.log("🥕 SAVE CROP:", croppedAreaPixels);
     setMeal(prev => ({ ...prev, imageCrop: JSON.stringify(croppedAreaPixels) }));
-    if (setDraftMeal) setDraftMeal(prev => ({ ...prev, imageCrop: JSON.stringify(croppedAreaPixels), previewUrl: url }));
+    if (setDraftMeal) setDraftMeal(prev => ({ ...prev, image, imageCrop: JSON.stringify(croppedAreaPixels), previewUrl: url }));
 
     setShowCropper(false);
     setImageToCrop(null);
@@ -146,7 +164,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
   // Handle Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    if (editLoading) return;
     if (!validateMealData()) return;
 
     // Use FormData for file upload
@@ -178,6 +196,8 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
     }
 
     try {
+      assertSession();
+      const started = captureSession();
       let response;
       // Headers handled by api.js (Token) + Axios auto-detection (Multipart)
 
@@ -191,9 +211,12 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
 
       // Check if response is successful
       if (response.data) {
-        if (!editId) {
-          setMeals((prevMeals) => [...prevMeals, response.data]);
-        }
+        assertSession();
+        setMeals(prevMeals => editId ? prevMeals.map(item => item._id === editId ? response.data : item) : [...prevMeals, response.data]);
+        // Reconcile with the server even if the initial list was still loading.
+        // A refresh failure is shown by the meal list; the save itself succeeded.
+        await refreshMeals().catch(() => {});
+        assertSession();
 
         // Clear form
         setMeal({ name: "", ingredients: "", category: "" });
@@ -202,7 +225,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
         if (setDraftMeal) setDraftMeal({ name: "", ingredients: "", category: "", image: null, previewUrl: null });
         setEditId(null);
         // Clear location state to prevent sticky edit mode
-        window.history.replaceState({}, document.title);
+        navigate(location.pathname, { replace: true, state: null });
 
         // Show success message
         // Show success message
@@ -215,10 +238,13 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
         }
 
         if (editId) {
-          setTimeout(() => navigate('/available-meals'), 2000); // Redirect back after update
+          redirectTimer.current = setTimeout(() => {
+            if (isCurrentSession(started)) navigate('/available-meals');
+          }, 2000);
         }
       }
     } catch (error) {
+      if (error.code === 'SESSION_CHANGED' || error.code === 'REQUEST_CANCELLED' || error.statusCode === 401) return;
       console.error("Error adding meal:", error);
 
       // Visual feedback for error (Carrot handles it all)

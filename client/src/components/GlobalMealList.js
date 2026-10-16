@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../utils/api";
 
-function GlobalMealList({ meals: userMeals }) {
+function GlobalMealList({ meals: userMeals, onImport }) {
     const [globalMeals, setGlobalMeals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [addingId, setAddingId] = useState(null);
@@ -24,8 +24,10 @@ function GlobalMealList({ meals: userMeals }) {
         setAddingId(mealId);
         try {
             await api.post(`/meals/copy/${mealId}`);
+            await onImport();
             alert("Meal added to your list! 🥗");
         } catch (err) {
+            if (err.code === 'SESSION_CHANGED' || err.statusCode === 401) return;
             console.error("Error copying meal:", err);
             alert("Failed to add meal.");
         } finally {

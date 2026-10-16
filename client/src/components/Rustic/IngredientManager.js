@@ -177,6 +177,7 @@ function IngredientManager({ ingredients, onChange }) {
                 setIsBulkMode(false);
             }
         } catch (err) {
+            if (err.code === 'SESSION_CHANGED' || err.code === 'REQUEST_CANCELLED' || err.statusCode === 401) return;
             console.error("AI Parse Failed, falling back to regex", err);
             // Smoother message for Quota/Rate Limits
             const errMsg = err.response?.data?.msg || err.message;

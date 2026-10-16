@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
-import api from "./utils/api";
 import AddMeal from "./components/AddMeal";
 import MealList from "./components/MealList";
 import GroceryList from "./components/GroceryList";
@@ -14,6 +13,7 @@ import SmartImportModal from "./components/SmartImportModal";
 import ShadowLogin from "./Admin/ShadowLogin";
 import AdminDashboard from "./Admin/AdminDashboard";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
+import { UserDataProvider, useUserData } from './context/UserDataContext';
 import { CarrotProvider, useCarrot } from "./context/CarrotContext";
 import "./App.css";
 
@@ -110,52 +110,19 @@ function Navbar() {
   );
 }
 
-// Canceling edit to view more lines first.
-function App() {
-  const [meals, setMeals] = useState([]);
-  const [weeklyPlan, setWeeklyPlan] = useState([]);
-  const [showStarterModal, setShowStarterModal] = useState(false);
-  const [showSmartModal, setShowSmartModal] = useState(false);
-  // Persist AddMeal form data across navigation
-  const [draftMeal, setDraftMeal] = useState({ name: "", ingredients: "", category: "", image: null, previewUrl: null });
-
-  useEffect(() => {
-    // Only fetch if authenticated (logic handled in components or check token)
-    if (localStorage.getItem("token")) {
-      fetchMeals();
-    }
-  }, []);
-
-  async function fetchMeals() {
-    try {
-      // Token is automatically added by AuthContext/axios interruptor if set up correctly.
-      // However, we rely on AuthContext to set the header. 
-      // If we are just mounting, we rely on AuthContext to load validity.
-      // Ideally, specific components should fetch their data.
-      const response = await api.get("/meals");
-      setMeals(response.data);
-      // Check for starter pack eligibility
-      if (response.data.length === 0) {
-        setShowStarterModal(true);
-      }
-    } catch (error) {
-      console.error("Error fetching meals:", error);
-    }
-  }
-
-  const handleImport = () => {
-    fetchMeals(); // Refresh meals after import
-  };
+function Application() {
+  const { isAuthenticated } = useContext(AuthContext);
+  const { meals, setMeals, weeklyPlan, setWeeklyPlan, draftMeal, setDraftMeal,
+    showStarterModal, setShowStarterModal, showSmartModal, setShowSmartModal, refreshMeals } = useUserData();
+  const handleImport = () => refreshMeals();
 
   return (
-    <AuthProvider>
-      <CarrotProvider>
-        <Router>
+    <>
           <GlobalCarrotConnector openSmartFridge={() => setShowSmartModal(true)} />
           <div className="App">
             <Navbar />
             <div className="container mt-4">
-              {localStorage.getItem("token") && (
+              {isAuthenticated && (
                 <>
                   <StarterPackModal
                     isOpen={showStarterModal}
@@ -224,7 +191,7 @@ function App() {
                   path="/browse"
                   element={
                     <PrivateRoute>
-                      <GlobalMealList meals={meals} />
+                      <GlobalMealList meals={meals} onImport={handleImport} />
                     </PrivateRoute>
                   }
                 />
@@ -247,10 +214,21 @@ function App() {
               </Routes>
             </div>
           </div>
-        </Router>
-      </CarrotProvider>
-    </AuthProvider>
+    </>
   );
+}
+
+function SessionApplication() {
+  const { sessionId, isAuthenticated } = useContext(AuthContext);
+  return (
+    <CarrotProvider key={isAuthenticated ? sessionId : 'public'}>
+      <UserDataProvider><Application /></UserDataProvider>
+    </CarrotProvider>
+  );
+}
+
+function App() {
+  return <AuthProvider><Router><SessionApplication /></Router></AuthProvider>;
 }
 
 export default App;

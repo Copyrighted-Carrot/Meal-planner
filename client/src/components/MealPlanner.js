@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import api from "../utils/api";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -7,12 +7,14 @@ function MealPlanner({ meals, weeklyPlan, setWeeklyPlan }) {
   // Removed local state to fix persistence issue. Using props instead.
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
     // Only load from server if we don't have a plan yet (session persistence)
     if (weeklyPlan.length === 0) {
       async function loadPlan() {
         try {
-          const res = await api.get("/plan");
-          if (res.data && res.data.length > 0) {
+          const res = await api.get("/plan", { signal: controller.signal });
+          if (active && res.data && res.data.length > 0) {
             setWeeklyPlan(res.data);
           }
         } catch (err) {
@@ -21,6 +23,7 @@ function MealPlanner({ meals, weeklyPlan, setWeeklyPlan }) {
       }
       loadPlan();
     }
+    return () => { active = false; controller.abort(); };
   }, [setWeeklyPlan, weeklyPlan.length]);
 
   const generateMealPlan = async () => {

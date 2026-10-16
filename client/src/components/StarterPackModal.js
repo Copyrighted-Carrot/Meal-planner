@@ -10,10 +10,11 @@ function StarterPackModal({ isOpen, onClose, onImport, onSwitch }) {
         setLoading(true);
         try {
             await api.post("/meals/import-starter-pack");
-            onImport(); // Refresh parent state
+            await onImport(); // Refresh the current user's shared meals before closing.
             onClose();
             alert("Starter pack imported! 🎉");
         } catch (err) {
+            if (err.code === 'SESSION_CHANGED' || err.statusCode === 401) return;
             console.error("Error importing starter pack:", err);
             alert("Failed to import starter pack.");
         } finally {

@@ -25,7 +25,9 @@ api.interceptors.response.use(response => {
     const config = error.config;
     if (config?.session && !config.skipAuth && !isCurrentSession(config.session)) return Promise.reject(sessionChangedError());
     // Never retain Axios request/response objects: they can contain credentials.
-    const failure = new Error(error.response?.data?.message || error.response?.data?.msg || (axios.isCancel(error) ? 'Request cancelled.' : 'Unable to complete the request. Please try again.'));
+    const body = error.response?.data;
+    const rateLimitMessage = error.response?.status === 429 && typeof body === 'string' ? body : null;
+    const failure = new Error(body?.message || body?.msg || rateLimitMessage || (axios.isCancel(error) ? 'Request cancelled.' : 'Unable to complete the request. Please try again.'));
     failure.statusCode = error.response?.status;
     failure.code = axios.isCancel(error) ? 'REQUEST_CANCELLED' : 'API_ERROR';
     if (config?.session && !config.skipAuth && failure.statusCode === 401 && isCurrentSession(config.session)) setSessionToken(null);

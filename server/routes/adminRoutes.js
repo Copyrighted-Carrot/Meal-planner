@@ -12,15 +12,26 @@ const bcrypt = require('bcryptjs'); // Needed for password reset feature
 
 // --- 1. SHADOW LOGIN ---
 router.post('/login', (req, res) => {
-    const { password } = req.body;
-    if (password === process.env.ADMIN_MASTER_PASSWORD) {
-        const payload = { admin: { id: 'shadow_master', role: 'admin' } };
-        jwt.sign(payload, process.env.ADMIN_JWT_SECRET, { expiresIn: '24h' }, (err, token) => {
-            if (err) throw err;
-            res.json({ token });
-        });
-    } else {
+    const masterPassword = process.env.ADMIN_MASTER_PASSWORD;
+    const signingSecret = process.env.ADMIN_JWT_SECRET;
+    if (typeof masterPassword !== 'string' || !masterPassword.trim()
+        || typeof signingSecret !== 'string' || !signingSecret.trim()) {
+        return res.status(503).json({ msg: 'Manager access is unavailable.' });
+    }
+
+    const password = req.body?.password;
+    if (typeof password !== 'string' || !password.trim() || password !== masterPassword) {
         return res.status(401).json({ msg: '⛔ Access Denied.' });
+    }
+
+    const payload = { admin: { id: 'shadow_master', role: 'admin' } };
+    try {
+        jwt.sign(payload, signingSecret, { algorithm: 'HS256', expiresIn: '24h' }, (err, token) => {
+            if (err) return res.status(500).json({ msg: 'Unable to sign in. Please try again.' });
+            return res.json({ token });
+        });
+    } catch (err) {
+        return res.status(500).json({ msg: 'Unable to sign in. Please try again.' });
     }
 });
 

@@ -79,3 +79,11 @@ test('manager transport shares configuration without using the user token', asyn
         return Promise.resolve(response(config));
     } });
 });
+
+test('plain-text rate limits keep their retry guidance without invalidating the session', async () => {
+    setSessionToken('account-a-fixture');
+    const message = 'Too many login attempts. You have 15 minutes left.';
+    await expect(api.post('/auth/login', {}, { adapter: config => Promise.reject({ config, response: { status: 429, data: message } }) }))
+        .rejects.toMatchObject({ message, statusCode: 429 });
+    expect(captureSession().token).toBe('account-a-fixture');
+});

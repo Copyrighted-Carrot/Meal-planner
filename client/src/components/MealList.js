@@ -1,41 +1,32 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import api from '../utils/api';
+import { useUserData } from '../context/UserDataContext';
 import { useNavigate } from "react-router-dom";
 import MealCard from "./Rustic/MealCard";
 import MealListTitle from "./Rustic/MealListTitle";
 import "./MealList.css";
 
 function MealList() {
-  const [meals, setMeals] = useState([]);
+  const { meals, setMeals, mealsLoading, mealsError, refreshMeals, assertSession } = useUserData();
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const navigate = useNavigate();
-
-  useEffect(() => {
-    async function fetchMeals() {
-      try {
-        const response = await api.get("/meals");
-        setMeals(response.data);
-      } catch (error) {
-        console.error("Error fetching meals:", error);
-      }
-    }
-    fetchMeals();
-  }, []);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this meal?")) return;
     try {
       await api.delete(`/meals/${id}`);
-      setMeals(meals.filter((meal) => meal._id !== id));
+      assertSession();
+      setMeals(current => current.filter((meal) => meal._id !== id));
     } catch (error) {
+      if (error.code === 'SESSION_CHANGED' || error.statusCode === 401) return;
       console.error("Error deleting meal:", error);
       alert("Failed to delete meal");
     }
   };
 
   const handleEdit = (meal) => {
-    navigate('/add', { state: { mealToEdit: meal } });
+    navigate('/add', { state: { mealId: meal._id } });
   };
 
   // --- Bulk Selection Logic ---
@@ -70,19 +61,22 @@ function MealList() {
     try {
       // Sequentially delete (could be parallelized but safer sequential for rate limits)
       for (const id of selectedIds) {
+        assertSession();
         await api.delete(`/meals/${id}`);
       }
 
       // Update local state
-      setMeals(meals.filter(m => !selectedIds.has(m._id)));
+      assertSession();
+      setMeals(current => current.filter(m => !selectedIds.has(m._id)));
       setIsSelectionMode(false);
       setSelectedIds(new Set());
 
     } catch (error) {
+      if (error.code === 'SESSION_CHANGED' || error.statusCode === 401) return;
       console.error("Bulk delete error:", error);
       alert("Some meals could not be deleted.");
       // Refresh simply
-      window.location.reload();
+      refreshMeals().catch(() => {});
     }
   };
 
@@ -113,7 +107,7 @@ function MealList() {
         )}
       </div>
 
-      {meals.length === 0 ? (
+      {mealsLoading ? <p role="status">Loading your meals...</p> : mealsError ? <p role="alert">{mealsError} <button onClick={() => refreshMeals().catch(() => {})}>Retry</button></p> : meals.length === 0 ? (
         <div className="text-center mt-5" style={{ color: '#5d4037', fontSize: '1.5rem', fontWeight: 'bold' }}>
           <p>No meals found. Start cooking! 🥕</p>
         </div>

@@ -16,6 +16,7 @@ function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
             const res = await api.post("/meals/suggest", { ingredients });
             setSuggestions(res.data);
         } catch (err) {
+            if (err.code === 'SESSION_CHANGED' || err.statusCode === 401) return;
             console.error("Error fetching suggestions:", err);
             alert("Failed to find suggestions.");
         } finally {
@@ -27,9 +28,10 @@ function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
         setAddingId(mealId);
         try {
             await api.post(`/meals/copy/${mealId}`);
-            onImport(); // Check to refresh main list if needed
+            await onImport(); // Refresh the current user's shared meals.
             alert("Meal added! 🥗");
         } catch (err) {
+            if (err.code === 'SESSION_CHANGED' || err.statusCode === 401) return;
             console.error("Error adding meal:", err);
         } finally {
             setAddingId(null);
