@@ -112,7 +112,7 @@ function Navbar() {
 
 function Application() {
   const { isAuthenticated } = useContext(AuthContext);
-  const { meals, setMeals, weeklyPlan, setWeeklyPlan, draftMeal, setDraftMeal,
+  const { meals, setMeals, weeklyPlan, draftMeal, setDraftMeal,
     showStarterModal, setShowStarterModal, showSmartModal, setShowSmartModal, refreshMeals } = useUserData();
   const handleImport = () => refreshMeals();
 
@@ -199,7 +199,7 @@ function Application() {
                   path="/meal-planner"
                   element={
                     <PrivateRoute>
-                      <MealPlanner meals={meals} weeklyPlan={weeklyPlan} setWeeklyPlan={setWeeklyPlan} />
+                      <MealPlanner meals={meals} />
                     </PrivateRoute>
                   }
                 />

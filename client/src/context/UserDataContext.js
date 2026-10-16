@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { AuthContext } from './AuthContext';
 import api from '../utils/api';
 import { captureSession, isCurrentSession, sessionChangedError } from '../utils/session';
+import useWeeklyPlan from './useWeeklyPlan';
 
 const UserDataContext = createContext(null);
 const emptyDraft = () => ({ name: '', ingredients: '', category: '', image: null, previewUrl: null });
@@ -18,7 +19,7 @@ function UserDataSession({ children }) {
     const mounted = useRef(false);
     const fetchVersion = useRef(0);
     const [meals, storeMeals] = useState([]);
-    const [weeklyPlan, setWeeklyPlan] = useState([]);
+    const planState = useWeeklyPlan();
     const [draftMeal, setDraftMeal] = useState(emptyDraft);
     const [showStarterModal, setShowStarterModal] = useState(false);
     const [showSmartModal, setShowSmartModal] = useState(false);
@@ -73,7 +74,7 @@ function UserDataSession({ children }) {
 
     return <UserDataContext.Provider value={{
         meals, setMeals, mealsLoading, mealsError, refreshMeals, assertSession,
-        weeklyPlan, setWeeklyPlan, draftMeal, setDraftMeal,
+        ...planState, draftMeal, setDraftMeal,
         showStarterModal, setShowStarterModal, showSmartModal, setShowSmartModal
     }}>{children}</UserDataContext.Provider>;
 }
