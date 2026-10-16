@@ -24,18 +24,35 @@ yarn-debug.log*
 yarn-error.log*
 
 # Private local artifacts and generated records.
-/.recovery-local/
-/audit/
+.recovery-local/
+.private/
+audit/
+audit-screenshots/
 /PROJECT_AUDIT.md
+/docs/PHASE*_CHECKPOINT.md
+/docs/RECOVERY.md
+/docs/CREDENTIAL_ROTATION.md
 /server/node
+backup/
 backups/
 dumps/
 *.dump
+*.bson
+*.archive
 *.sql
 *.sqlite*
 *.db
 *.zip
 *.bak
+*.backup
+*.bundle
+*.tar
+*.gz
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
 
 # Machine/editor state.
 .DS_Store

@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
-const excludedDirectories = new Set(['node_modules', 'build', 'dist', 'coverage', '.git', '.cache', '.recovery-local', 'audit', 'backups', 'dumps', '.idea', '.vscode', '.codex', '.agents', '.aws', '.ssh']);
+const excludedDirectories = new Set(['node_modules', 'build', 'dist', 'coverage', '.git', '.cache', '.recovery-local', '.private', 'audit', 'audit-screenshots', 'backup', 'backups', 'dumps', '.idea', '.vscode', '.codex', '.agents', '.aws', '.ssh']);
 const tokenPatterns = [
   ['provider token', /\bgsk_[A-Za-z0-9_-]{20,}\b/g],
   ['provider token', /\bAIza[A-Za-z0-9_-]{30,}\b/g],
@@ -20,7 +20,8 @@ function forbiddenPath(file) {
   const base = parts.at(-1);
   return parts.some(part => excludedDirectories.has(part)) ||
     (base.startsWith('.env') && base !== '.env.example') ||
-    /\.(?:pem|key|p12|pfx|log|dump|sql|db|sqlite\d*|zip|bak)$/i.test(base) ||
+    /\.(?:pem|key|p12|pfx|log|dump|bson|archive|sql|db|sqlite\d*|zip|bak|backup|bundle|tar|gz|tgz|bz2|xz|7z|rar)$/i.test(base) ||
+    /^docs\/(?:phase[^/]*_checkpoint|recovery|credential_rotation)\.md$/.test(normalized) ||
     /^(?:credentials|service-account).*\.json$/i.test(base) ||
     /^(?:\.pnp\.|(?:npm|yarn)-(?:debug|error)\.log)/.test(base) ||
     /(?:\.tsbuildinfo|\.sw[op]|~)$/.test(base) ||

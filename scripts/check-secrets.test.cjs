@@ -39,6 +39,20 @@ test('rejects private/generated paths while allowing environment examples', () =
   assert.equal(forbiddenPath('client/src/assets/carrot.png'), false);
 });
 
+test('Git ignores private reports and archives while retaining public source and templates', t => {
+  const { root, git } = repository(t);
+  fs.copyFileSync(path.join(__dirname, '..', '.gitignore'), path.join(root, '.gitignore'));
+  const privateFiles = ['server/.env', 'client/.env.local', 'audit/session.png', 'nested/audit/result.json', '.recovery-local/history.json', '.private/notes.md', 'audit-screenshots/account.png', 'backup/original.json', 'backups/original.json', 'dumps/database.json', 'database.bson', 'database.archive', 'database.tar.gz', 'database.tgz', 'database.backup', 'history.bundle', 'client/build/index.html', 'server/node_modules/module.js', 'coverage/report.json', 'server/run.log', '.vscode/settings.json', 'docs/PHASE1_CHECKPOINT.md', 'docs/PHASE2_CHECKPOINT.md', 'docs/RECOVERY.md', 'docs/CREDENTIAL_ROTATION.md'];
+  for (const file of privateFiles) {
+    assert.equal(forbiddenPath(file), true, file);
+    assert.equal(git(['check-ignore', '--no-index', file]).toString().trim(), file);
+  }
+  for (const file of ['client/src/App.js', 'client/src/assets/carrot.png', 'client/package-lock.json', 'server/.env.example', 'client/.env.example', 'README.md', 'docs/SETUP.md']) {
+    assert.equal(forbiddenPath(file), false, file);
+    assert.throws(() => git(['check-ignore', '--no-index', file]), error => error.status === 1);
+  }
+});
+
 test('allows empty/template credentials but rejects real-looking values in templates', () => {
   assert.equal(scanFile('server/.env.example', Buffer.from('JWT_SECRET=replace-with-a-long-random-secret\nGROQ_API_KEY=\n')).length, 0);
   const value = crypto.randomBytes(24).toString('hex');
@@ -83,6 +97,17 @@ test('rejects forced staging of a private environment file', t => {
   fs.writeFileSync(path.join(root, '.env'), 'PORT=5000');
   git(['add', '.env']);
   assert.ok(run(root, '--staged').findings.some(f => f.rule === 'forbidden private/generated path'));
+});
+
+test('rejects forced staging of internal reports and database archives', t => {
+  const { root, git } = repository(t);
+  fs.copyFileSync(path.join(__dirname, '..', '.gitignore'), path.join(root, '.gitignore'));
+  const files = ['docs/PHASE2_CHECKPOINT.md', 'database.bson', 'database.archive', 'database.tar.gz'];
+  fs.mkdirSync(path.join(root, 'docs'));
+  for (const file of files) fs.writeFileSync(path.join(root, file), 'Private test fixture');
+  git(['add', '-f', '--', ...files]);
+  const rejected = run(root, '--staged').findings.filter(finding => finding.rule === 'forbidden private/generated path').map(finding => finding.file).sort();
+  assert.deepEqual(rejected, [...files].sort());
 });
 
 test('checks staged files against a private local secret reference', t => {
