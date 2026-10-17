@@ -2,6 +2,7 @@ import React, { act, useContext, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AuthProvider, AuthContext } from './AuthContext';
 import { UserDataProvider, useUserData } from './UserDataContext';
+import useWeeklyPlan from './useWeeklyPlan';
 import api from '../utils/api';
 import { setSessionToken } from '../utils/session';
 import { PLAN_DAYS, PLAN_SLOTS, weekForDate } from '../utils/planDate';
@@ -52,6 +53,7 @@ const defaultAdapter = async config => {
 };
 
 beforeEach(() => {
+    sessionStorage.clear();
     setSessionToken('plan-account-a-fixture');
     requests = [];
     records = new Map();
@@ -66,6 +68,8 @@ afterEach(async () => {
     container.remove();
     api.defaults.adapter = adapter;
     setSessionToken(null);
+    jest.restoreAllMocks();
+    sessionStorage.clear();
 });
 
 test.each([
@@ -227,4 +231,93 @@ test('StrictMode effect replay still completes the initial plan load', async () 
     expect(data.planRecord.loaded).toBe(true);
     expect(data.planRecord.loading).toBe(false);
     expect(data.weeklyPlan).toEqual(fullPlan());
+});
+
+test('refresh restores the selected week automatically and fetches its saved snacks', async () => {
+    const selectedWeek = '2030-01-07';
+    await mount({ automatic: true });
+    await act(async () => data.selectWeek(selectedWeek));
+    await act(async () => data.savePlan(fullPlan()));
+    expect(sessionStorage.getItem('meal-planner:week:A')).toBe(selectedWeek);
+    const requestCount = requests.length;
+    await act(async () => root.unmount());
+    root = createRoot(container);
+    await mount({ automatic: true });
+    expect(data.weekStart).toBe(selectedWeek);
+    expect(data.weeklyPlan).toEqual(fullPlan());
+    const refreshed = requests.slice(requestCount).filter(config => config.url === '/plan');
+    expect(refreshed.length).toBeGreaterThan(0);
+    expect(refreshed.every(config => config.params.weekStart === selectedWeek)).toBe(true);
+});
+
+test('week preference stores only the normalized Monday date, never meal or plan data', async () => {
+    await mount({ automatic: true });
+    await act(async () => data.selectWeek('2030-01-13'));
+    await act(async () => data.savePlan(fullPlan()));
+    expect(sessionStorage.length).toBe(1);
+    expect(sessionStorage.key(0)).toBe('meal-planner:week:A');
+    expect(sessionStorage.getItem('meal-planner:week:A')).toBe('2030-01-07');
+});
+
+test('each account restores only its own selected week and logout clears the active plan', async () => {
+    const aWeek = '2030-01-07';
+    const bWeek = '2030-01-14';
+    records.set(`A:${aWeek}`, record(aWeek, fullPlan(), 1));
+    records.set(`B:${bWeek}`, record(bWeek, fullPlan('B'), 1));
+    await mount({ automatic: true });
+    await act(async () => data.selectWeek(aWeek));
+    expect(data.weeklyPlan).toEqual(fullPlan());
+    await act(async () => auth.logout());
+    expect(data.weeklyPlan).toEqual([]);
+    expect(data.weekStart).toBe(weekForDate());
+    await act(async () => setSessionToken('plan-account-b-fixture'));
+    expect(data.weekStart).toBe(weekForDate());
+    expect(data.weeklyPlan).toEqual([]);
+    await act(async () => data.selectWeek(bWeek));
+    expect(data.weeklyPlan).toEqual(fullPlan('B'));
+    await act(async () => setSessionToken('plan-account-a-fixture'));
+    expect(data.weekStart).toBe(aWeek);
+    expect(data.weeklyPlan).toEqual(fullPlan());
+    expect(container.textContent).not.toContain('B snack');
+    expect(sessionStorage.getItem('meal-planner:week:B')).toBe(bWeek);
+});
+
+test.each(['not-a-date', '2026-02-30', '2026-10-12T00:00:00Z'])('invalid saved week falls back to the current calendar week: %s', async saved => {
+    sessionStorage.setItem('meal-planner:week:A', saved);
+    await mount({ automatic: true });
+    expect(data.weekStart).toBe(weekForDate());
+    expect(data.planRecord.loaded).toBe(true);
+});
+
+test('unavailable session storage does not prevent current-week loading or selecting another week', async () => {
+    const originalGet = Storage.prototype.getItem;
+    const originalSet = Storage.prototype.setItem;
+    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(function (key) {
+        if (this === sessionStorage) throw new Error('Storage unavailable');
+        return originalGet.call(this, key);
+    });
+    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(function (key, value) {
+        if (this === sessionStorage) throw new Error('Storage unavailable');
+        return originalSet.call(this, key, value);
+    });
+    await mount({ automatic: true });
+    expect(data.weekStart).toBe(weekForDate());
+    expect(data.planRecord.loaded).toBe(true);
+    await act(async () => data.selectWeek('2030-01-07'));
+    expect(data.weekStart).toBe('2030-01-07');
+    expect(data.planRecord.loaded).toBe(true);
+});
+
+test('a hook without an account ID neither restores another account preference nor stores a preference', async () => {
+    sessionStorage.setItem('meal-planner:week:A', '2030-01-07');
+    function AnonymousProbe() {
+        data = useWeeklyPlan();
+        return null;
+    }
+    await act(async () => root.render(<AnonymousProbe />));
+    expect(data.weekStart).toBe(weekForDate());
+    await act(async () => data.selectWeek('2030-01-14'));
+    expect(data.weekStart).toBe('2030-01-14');
+    expect(sessionStorage.length).toBe(1);
+    expect(sessionStorage.getItem('meal-planner:week:A')).toBe('2030-01-07');
 });

@@ -6,8 +6,16 @@ import { captureSession, isCurrentSession, sessionChangedError } from '../utils/
 const emptyWeek = weekStart => ({ weekStart, _id: null, revision: 0, plan: [], legacyPlan: null,
     loaded: false, loading: false, saving: false, error: '', notice: '' });
 
-export default function useWeeklyPlan() {
-    const [state, setState] = useState(() => emptyWeek(weekForDate()));
+const selectedWeek = accountId => {
+    try {
+        const saved = accountId && sessionStorage.getItem(`meal-planner:week:${accountId}`);
+        if (saved) return weekForDate(saved);
+    } catch (_) { /* Invalid preferences or unavailable storage must not block plans. */ }
+    return weekForDate();
+};
+
+export default function useWeeklyPlan(accountId) {
+    const [state, setState] = useState(() => emptyWeek(selectedWeek(accountId)));
     const current = useRef(state);
     const generation = useRef(0);
     const mounted = useRef(false);
@@ -27,9 +35,12 @@ export default function useWeeklyPlan() {
         if (!active()) throw sessionChangedError();
         const weekStart = weekForDate(value);
         if (weekStart === current.current.weekStart) return;
+        try {
+            if (accountId) sessionStorage.setItem(`meal-planner:week:${accountId}`, weekStart);
+        } catch (_) { /* The selected week still works when browser storage is disabled. */ }
         generation.current += 1;
         update(emptyWeek(weekStart));
-    }, [active, update]);
+    }, [accountId, active, update]);
 
     const loadPlan = useCallback(async (force = false) => {
         if (!active()) throw sessionChangedError();

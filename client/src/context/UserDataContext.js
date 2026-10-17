@@ -14,12 +14,12 @@ export function UserDataProvider({ children }) {
 }
 
 function UserDataSession({ children }) {
-    const { isAuthenticated } = useContext(AuthContext);
+    const { isAuthenticated, user } = useContext(AuthContext);
     const session = useRef(captureSession());
     const mounted = useRef(false);
     const fetchVersion = useRef(0);
     const [meals, storeMeals] = useState([]);
-    const planState = useWeeklyPlan();
+    const planState = useWeeklyPlan(user?.id || user?._id);
     const [draftMeal, setDraftMeal] = useState(emptyDraft);
     const [showStarterModal, setShowStarterModal] = useState(false);
     const [showSmartModal, setShowSmartModal] = useState(false);

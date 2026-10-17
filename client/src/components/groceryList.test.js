@@ -81,6 +81,7 @@ const defaultResponse = async config => {
 };
 
 beforeEach(() => {
+    sessionStorage.clear();
     setSessionToken('grocery-account-a-fixture');
     requests = [];
     lists = new Map([[`A:${currentWeek}`, fixtureList()], [`B:${currentWeek}`, fixtureList('B')]]);
@@ -110,6 +111,7 @@ afterEach(async () => {
     URL.revokeObjectURL = revokeObjectURL;
     jest.restoreAllMocks();
     jest.clearAllMocks();
+    sessionStorage.clear();
 });
 
 test('direct Grocery load fetches its week and plan; generation sends only authoritative plan references', async () => {
