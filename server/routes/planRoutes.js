@@ -3,9 +3,9 @@ const router = express.Router();
 const planController = require("../controllers/planController");
 const requireAuth = require("../middleware/requireAuth");
 const validate = require("../middleware/validate");
-const { planValidator } = require("../middleware/validators/planValidator");
+const { planValidator, weekValidator } = require("../middleware/validators/planValidator");
 
-router.get("/", requireAuth, planController.getPlan);
+router.get("/", requireAuth, weekValidator, validate, planController.getPlan);
 
 router.post(
     "/",

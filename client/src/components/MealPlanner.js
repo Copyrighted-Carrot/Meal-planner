@@ -1,39 +1,18 @@
 import React, { useEffect } from "react";
-import api from "../utils/api";
+import { useUserData } from "../context/UserDataContext";
+import { PLAN_DAYS } from "../utils/planDate";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-function MealPlanner({ meals, weeklyPlan, setWeeklyPlan }) {
-  // Removed local state to fix persistence issue. Using props instead.
+function MealPlanner({ meals }) {
+  const { weeklyPlan, weekStart, selectWeek, planRecord, loadPlan, savePlan, mealsLoading, mealsError } = useUserData();
+  const busy = planRecord.loading || planRecord.saving;
 
-  useEffect(() => {
-    let active = true;
-    const controller = new AbortController();
-    // Only load from server if we don't have a plan yet (session persistence)
-    if (weeklyPlan.length === 0) {
-      async function loadPlan() {
-        try {
-          const res = await api.get("/plan", { signal: controller.signal });
-          if (active && res.data && res.data.length > 0) {
-            setWeeklyPlan(res.data);
-          }
-        } catch (err) {
-          console.error("Error loading plan:", err);
-        }
-      }
-      loadPlan();
-    }
-    return () => { active = false; controller.abort(); };
-  }, [setWeeklyPlan, weeklyPlan.length]);
+  useEffect(() => { loadPlan(); }, [weekStart, loadPlan]);
 
   const generateMealPlan = async () => {
-    if (meals.length === 0) {
-      setWeeklyPlan([]);  // Update global state
-      return;
-    }
-
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    const newPlan = days.map((day) => ({
+    if (!meals.length || busy || !planRecord.loaded) return;
+    const newPlan = PLAN_DAYS.map((day) => ({
       day,
       breakfast: getRandomMeal("Breakfast"),
       lunch: getRandomMeal("Lunch"),
@@ -41,14 +20,9 @@ function MealPlanner({ meals, weeklyPlan, setWeeklyPlan }) {
       snack: getRandomMeal("Snack"),
     }));
 
-    setWeeklyPlan(newPlan); // Update Global State immediately
-
-    // Save to server
     try {
-      await api.post("/plan", { plan: newPlan });
-    } catch (err) {
-      console.error("Error saving plan:", err);
-    }
+      await savePlan(newPlan);
+    } catch (_) { /* Shared state displays the save error. */ }
   };
 
   const getRandomMeal = (category) => {
@@ -128,9 +102,22 @@ function MealPlanner({ meals, weeklyPlan, setWeeklyPlan }) {
 
   return (
     <div className="container mt-4">
+      <label htmlFor="plan-week">Week beginning Monday</label>
+      <input id="plan-week" type="date" className="form-control mb-2" value={weekStart} disabled={planRecord.saving}
+        onChange={event => { if (event.target.value) selectWeek(event.target.value); }} />
+      {planRecord.loading && <p role="status">Loading this week's plan...</p>}
+      {planRecord.saving && <p role="status">Saving this week's plan...</p>}
+      {planRecord.notice && <p role="status" className="text-success">{planRecord.notice}</p>}
+      {(planRecord.error || mealsError) && <div role="alert" className="alert alert-danger">{planRecord.error || mealsError}</div>}
+      {planRecord.error && <button className="btn btn-secondary mb-2" disabled={busy} onClick={() => loadPlan(true)}>Reload this week</button>}
+      {planRecord.legacyPlan?.length > 0 && <div className="alert alert-info">
+        An older undated plan is available. It has not been assigned to this week.
+        <button className="btn btn-secondary ms-2" disabled={busy || !planRecord.loaded}
+          onClick={() => savePlan(planRecord.legacyPlan).catch(() => {})}>Copy older plan to this week</button>
+      </div>}
       <h2>Weekly Meal Plan 📅</h2>
       {weeklyPlan.length === 0 ? (
-        <p>No meals available. Add some meals first!</p>
+        <p>{meals.length ? 'No saved plan for this week. Generate one below.' : 'No meals available. Add some meals first!'}</p>
       ) : (
         <>
           <table className="table">
@@ -145,25 +132,11 @@ function MealPlanner({ meals, weeklyPlan, setWeeklyPlan }) {
             </thead>
             <tbody>
               {weeklyPlan.map((dayPlan) => {
-                // Calculate Daily Calories
-                const meals = [dayPlan.breakfast, dayPlan.lunch, dayPlan.snack, dayPlan.dinner];
-                const totalCals = meals.reduce((sum, m) => sum + (m?.nutrition?.calories || 0), 0);
-                const progress = Math.min((totalCals / 2000) * 100, 100);
-
                 return (
                   <tr key={dayPlan.day}>
                     <td>
                       <strong>{dayPlan.day}</strong>
-                      <div className="mt-1" style={{ fontSize: '0.8rem' }}>
-                        🔥 {totalCals} kcal
-                        <div className="progress mt-1" style={{ height: '6px' }}>
-                          <div
-                            className={`progress-bar ${totalCals > 2000 ? 'bg-danger' : 'bg-success'}`}
-                            role="progressbar"
-                            style={{ width: `${progress}%` }}
-                          ></div>
-                        </div>
-                      </div>
+                      <div className="mt-1" style={{ fontSize: '0.8rem' }}>Nutrition unknown: portions are not verified.</div>
                     </td>
                     <td>{dayPlan.breakfast ? dayPlan.breakfast.name : "-"}</td>
                     <td>{dayPlan.lunch ? dayPlan.lunch.name : "-"}</td>
@@ -186,7 +159,8 @@ function MealPlanner({ meals, weeklyPlan, setWeeklyPlan }) {
           </div>
         </>
       )}
-      <button className="btn btn-success btn-lg mt-3 mb-5" onClick={generateMealPlan}>
+      <button className="btn btn-success btn-lg mt-3 mb-5" onClick={generateMealPlan}
+        disabled={busy || !planRecord.loaded || mealsLoading || !meals.length}>
         🔄 Generate New Plan
       </button>
     </div>

@@ -2,7 +2,7 @@ const groceryService = require("../services/groceryService");
 const asyncHandler = require("../utils/asyncHandler");
 
 const getLists = asyncHandler(async (req, res) => {
-    const lists = await groceryService.getLists(req.user.id);
+    const lists = await groceryService.getLists(req.user.id, req.query.weekStart);
     res.json(lists);
 });
 
@@ -17,7 +17,7 @@ const updateList = asyncHandler(async (req, res) => {
 });
 
 const deleteList = asyncHandler(async (req, res) => {
-    const result = await groceryService.deleteList(req.user.id, req.params.id);
+    const result = await groceryService.deleteList(req.user.id, req.params.id, Number(req.query.revision));
     res.json(result);
 });
 

@@ -4,7 +4,7 @@ A meal-planning application built with React, Express and MongoDB, with a rustic
 
 Create a personal meal collection, browse and import public recipes, plan a week of meals, and build a grocery list. The application also includes exports, optional ingredient assistance, Google sign-in, Manager Access and a character mini-game.
 
-**Development status:** under active development. Planner persistence, grocery calculations and responsive layouts need further work. Nutrition estimates are experimental and may not correctly account for ingredient quantities or serving sizes.
+**Development status:** under active development. Responsive layouts and optional provider integrations need further work. Nutrition estimates elsewhere in the application remain experimental; the planner marks nutrition unknown until portions can be verified.
 
 Owner and sole project contributor: **Copyrighted-Carrot <belindosamson@gmail.com>**.
 
@@ -17,6 +17,18 @@ scripts/      Repository checks and configuration-helper tests
 ```
 
 The client and server have separate package manifests and lockfiles. Run commands from the indicated directory; there is no root npm workspace.
+
+## Plans and groceries
+
+Choose a week using its Monday date. Plans save breakfast, lunch, dinner and snacks, with separate records for each account and week. The selected week is remembered per account in the current browser tab; meal and grocery contents are loaded from the server. A save is confirmed only after the API succeeds. If another session changed the record, reload before saving again.
+
+Older undated plans can be copied explicitly into a selected week. Older grocery lists remain available under the saved-list selector; they are not silently assigned a date. Previously discarded snacks cannot be reconstructed automatically. Generate a new plan to include them.
+
+Grocery generation uses the stored plan and combines compatible quantities deterministically. Fractions and mixed fractions are supported. The recipe convention is 1 cup = 240 ml, 1 tablespoon = 15 ml, and 1 teaspoon = 5 ml. Weight, volume, counts and package units remain separate; ingredient names match after case and whitespace normalization, without guessing synonyms, singular forms, density or package size. Ambiguous quantities remain visible as **quantity unknown**.
+
+Checkmarks are saved by item identity. Regenerating a list preserves a check only when both its ingredient identity and amount are unchanged. If the plan changes later, regenerate its grocery list explicitly. Older saved quantity text remains unchanged until regeneration. CSV, PDF and WhatsApp exports include the entire selected saved list, its quantities and checked states, regardless of search or collapsed rows.
+
+The plan API requires `weekStart` (a Monday in `YYYY-MM-DD` form) and a revision when saving. Plan writes send meal IDs; the server stores compact name/ingredient snapshots. Grocery generation sends the saved plan ID and revision, while checkbox writes send an item ID and list revision. The database account must be able to create the unique account/week indexes; a failed index creation blocks first saves rather than allowing duplicate weeks.
 
 ## Local setup
 

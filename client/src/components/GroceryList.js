@@ -1,335 +1,180 @@
-import React, { useState, useEffect } from "react";
-import api from "../utils/api";
-import { parseIngredient } from "../utils/ingredientParser";
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import api from '../utils/api';
+import { useUserData } from '../context/UserDataContext';
+import { captureSession, isCurrentSession } from '../utils/session';
+import { groceryCSV, groceryPDFTable, groceryText } from '../utils/groceryExport';
 
-function GroceryList({ weeklyPlan }) {
-  const [savedList, setSavedList] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+const emptyList = weekStart => ({ weekStart, list: null, legacy: [], loaded: false, busy: false, error: '', conflict: false });
+
+function GroceryList() {
+  const { weekStart, selectWeek, weeklyPlan, planRecord, loadPlan } = useUserData();
+  const [state, setState] = useState(() => emptyList(weekStart));
+  const [search, setSearch] = useState('');
   const [showAll, setShowAll] = useState(false);
+  const [legacyId, setLegacyId] = useState('');
+  const current = useRef(state);
+  const request = useRef({ version: 0, mounted: false, busy: false });
+  const session = useRef(captureSession());
+  const update = useCallback(next => { current.current = next; setState(next); }, []);
+  const active = useCallback(version => request.current.mounted && request.current.version === version && isCurrentSession(session.current), []);
 
-  // Load latest list from server on mount
+  const fetchLists = useCallback(async () => {
+    if (request.current.busy) return;
+    const version = ++request.current.version;
+    request.current.busy = true;
+    update({ ...emptyList(weekStart), busy: true });
+    try {
+      const { data } = await api.get('/grocery', { params: { weekStart } });
+      if (!active(version)) return;
+      update({ ...emptyList(weekStart), loaded: true,
+        list: data.find(list => list.weekStart === weekStart) || null,
+        legacy: data.filter(list => !list.weekStart) });
+    } catch (error) {
+      if (active(version)) update({ ...emptyList(weekStart), error: error.message });
+    } finally {
+      if (active(version)) request.current.busy = false;
+    }
+  }, [active, update, weekStart]);
+
   useEffect(() => {
-    fetchLatestList();
-  }, []);
+    const lifecycle = request.current;
+    lifecycle.mounted = true;
+    lifecycle.busy = false;
+    setSearch(''); setShowAll(false); setLegacyId('');
+    loadPlan();
+    fetchLists();
+    return () => { lifecycle.mounted = false; lifecycle.version += 1; };
+  }, [weekStart, loadPlan, fetchLists]);
 
-  const fetchLatestList = async () => {
-    setLoading(true);
+  // A newly selected week never renders the previous week's list, even for a frame.
+  const view = state.weekStart === weekStart ? state : emptyList(weekStart);
+  const savedList = legacyId ? view.legacy.find(list => list._id === legacyId) || null : view.list;
+  const busy = view.busy || planRecord.loading || planRecord.saving;
+  const canGenerate = view.loaded && planRecord.loaded && !busy && !view.conflict && Boolean(planRecord._id) && weeklyPlan.length > 0;
+
+  const mutate = async action => {
+    if (request.current.busy || !view.loaded || view.conflict) return;
+    request.current.busy = true;
+    const version = ++request.current.version;
+    update({ ...current.current, busy: true, error: '' });
     try {
-      const res = await api.get("/grocery");
-      if (res.data && res.data.length > 0) {
-        setSavedList(res.data[0]); // Get most recent list
-      }
-    } catch (err) {
-      console.error("Error fetching grocery list:", err);
-      // Don't show error to user immediately, just fallback to empty
+      const result = await action();
+      if (!active(version)) return;
+      const previous = current.current;
+      update({ ...previous, busy: false,
+        list: result?.weekStart === weekStart ? result : result === null && !legacyId ? null : previous.list,
+        legacy: legacyId && !result?.weekStart ? previous.legacy.flatMap(list => list._id === legacyId ? (result ? [result] : []) : [list]) : previous.legacy });
+      if (result?.weekStart === weekStart || result === null) setLegacyId('');
+    } catch (error) {
+      if (active(version)) update({ ...current.current, busy: false, conflict: true,
+        error: error.statusCode === 409 ? 'The plan or list changed. Reload before making more changes.' : `${error.message} Reload to confirm the saved list before retrying.` });
     } finally {
-      setLoading(false);
+      if (active(version)) request.current.busy = false;
     }
   };
 
-  const calculateItemsFromPlan = () => {
-    if (!weeklyPlan || weeklyPlan.length === 0) return [];
+  const generateList = () => {
+    if (!canGenerate) return;
+    return mutate(async () => (await api.post('/grocery', {
+      weekStart, sourcePlanId: planRecord._id, sourcePlanRevision: planRecord.revision,
+      revision: view.list?.revision || 0,
+    })).data);
+  };
 
-    const aggMap = new Map();
+  const toggleItem = item => {
+    if (!savedList || busy) return;
+    return mutate(async () => (await api.put(`/grocery/${savedList._id}`, {
+      itemId: item._id, checked: !item.checked, revision: savedList.revision || 0,
+    })).data);
+  };
 
-    // Helper: Normalize Weight to Grams
-    const toGrams = (qty, unit) => {
-      const q = parseFloat(qty) || 0;
-      switch (unit) {
-        case 'g': case 'gm': case 'grams': return q;
-        case 'kg': case 'kilo': return q * 1000;
-        case 'lb': case 'pound': return q * 453.592;
-        case 'oz': case 'ounce': return q * 28.3495;
-        default: return 0;
-      }
-    };
-
-    // Helper: Normalize Volume to ML
-    const toMl = (qty, unit) => {
-      const q = parseFloat(qty) || 0;
-      switch (unit) {
-        case 'ml': return q;
-        case 'l': case 'liter': case 'litre': return q * 1000;
-        case 'cup': return q * 240;
-        case 'tbsp': case 'tablespoon': return q * 15;
-        case 'tsp': case 'teaspoon': return q * 5;
-        default: return 0;
-      }
-    };
-
-    const isWeight = (u) => ['g', 'gm', 'grams', 'kg', 'kilo', 'lb', 'pound', 'oz', 'ounce'].includes(u);
-    const isVolume = (u) => ['ml', 'l', 'liter', 'litre', 'cup', 'tbsp', 'tablespoon', 'tsp', 'teaspoon'].includes(u);
-
-    weeklyPlan.forEach((dayPlan) => {
-      ["breakfast", "lunch", "dinner"].forEach((mealType) => {
-        const meal = dayPlan[mealType];
-        if (meal && meal.ingredients) {
-          // Handle both string array and comma-separated string
-          const list = Array.isArray(meal.ingredients)
-            ? meal.ingredients
-            : (typeof meal.ingredients === 'string' ? meal.ingredients.split(',') : []);
-
-          list.forEach((rawIng) => {
-            const parsed = parseIngredient(rawIng);
-            if (!parsed) return;
-
-            const key = parsed.name.toLowerCase();
-            if (!aggMap.has(key)) {
-              aggMap.set(key, {
-                name: parsed.name, // Keep one casing display
-                weightG: 0,
-                volumeMl: 0,
-                counts: {} // Map of unit -> total
-              });
-            }
-            const entry = aggMap.get(key);
-
-            if (isWeight(parsed.unit)) {
-              entry.weightG += toGrams(parsed.qty, parsed.unit);
-            } else if (isVolume(parsed.unit)) {
-              entry.volumeMl += toMl(parsed.qty, parsed.unit);
-            } else {
-              // Count or other unit (bunch, packet, x)
-              const u = parsed.unit === 'x' ? 'count' : parsed.unit;
-              entry.counts[u] = (entry.counts[u] || 0) + parseFloat(parsed.qty);
-            }
-          });
-        }
-      });
-    });
-
-    // Format final strings
-    return Array.from(aggMap.values()).map(entry => {
-      const parts = [];
-
-      // Format Weight
-      if (entry.weightG > 0) {
-        if (entry.weightG >= 1000) {
-          parts.push(`${parseFloat((entry.weightG / 1000).toFixed(2))} kg`);
-        } else {
-          parts.push(`${Math.round(entry.weightG)} g`);
-        }
-      }
-
-      // Format Volume
-      if (entry.volumeMl > 0) {
-        if (entry.volumeMl >= 1000) {
-          parts.push(`${parseFloat((entry.volumeMl / 1000).toFixed(2))} L`);
-        } else {
-          parts.push(`${Math.round(entry.volumeMl)} ml`);
-        }
-      }
-
-      // Format Counts
-      Object.entries(entry.counts).forEach(([unit, count]) => {
-        if (unit === 'count') {
-          parts.push(count > 1 ? `x${count}` : `x${count}`); // or empty string if just 1? Keep x for clarity implies simple count
-        } else {
-          parts.push(`${count} ${unit}${count > 1 ? 's' : ''}`); // pluralize crudely
-        }
-      });
-
-      // Fallback for empty (shouldn't happen if parsed correctly)
-      if (parts.length === 0) parts.push('x1');
-
-      return {
-        name: `${entry.name}: ${parts.join(' + ')}`,
-        amount: "", // Deprecated/Unused in simple string model but kept for schema compatibility
-        checked: false
-      };
+  const deleteList = () => {
+    if (!savedList || busy || !window.confirm('Are you sure you want to delete this list?')) return;
+    return mutate(async () => {
+      await api.delete(`/grocery/${savedList._id}`, { params: { revision: savedList.revision || 0 } });
+      return null;
     });
   };
 
-  const handleGenerateList = async () => {
-    const items = calculateItemsFromPlan();
-    if (items.length === 0) return alert("No items in plan to generate from!");
+  const reload = () => { if (!busy) { loadPlan(true); fetchLists(); } };
+  const items = savedList?.items || [];
+  const filteredList = items.filter(item => `${item.name} ${item.amount || ''}`.toLowerCase().includes(search.toLowerCase()));
 
-    setLoading(true);
-    try {
-      const res = await api.post("/grocery", { items });
-      setSavedList(res.data);
-      setError("");
-    } catch (err) {
-      setError(err.message || "Failed to save list");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleToggleItem = async (index) => {
-    if (!savedList) return;
-
-    const newItems = [...savedList.items];
-    newItems[index].checked = !newItems[index].checked;
-
-    // Optimistic update
-    setSavedList({ ...savedList, items: newItems });
-
-    try {
-      // Send full update to backend
-      await api.put(`/grocery/${savedList._id}`, { items: newItems });
-    } catch (err) {
-      console.error("Failed to update item:", err);
-      setError("Failed to sync changes");
-      // Revert on failure? For now, keep simple.
-    }
-  };
-
-  const handleDeleteList = async () => {
-    if (!savedList || !window.confirm("Are you sure you want to delete this list?")) return;
-
-    try {
-      await api.delete(`/grocery/${savedList._id}`);
-      setSavedList(null);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  // Determine which items to show
-  // If savedList exists, use its items. Otherwise empty.
-  const displayItems = savedList ? savedList.items : [];
-
-  const filteredList = displayItems.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  // Export Helpers
-  const getExportData = () => filteredList.map(item => `${item.checked ? '[x]' : '[ ]'} ${item.name}`);
-
-  // ... (Export functions reused but updated to use getExportData) ...
   const exportCSV = () => {
-    const data = getExportData();
-    if (data.length === 0) return alert("Nothing to export!");
-    const csvContent = "data:text/csv;charset=utf-8," + "Grocery List\n" + data.join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "grocery_list.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const url = URL.createObjectURL(new Blob(['\uFEFF', groceryCSV(items)], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url; link.download = 'grocery_list.csv';
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   };
-  // (Assuming other exports similar, keeping brief for this edit or could re-include full code if preferred. 
-  // I will include full code to be safe).
-
   const exportPDF = async () => {
-    const data = getExportData();
-    if (data.length === 0) return alert("Nothing to export!");
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF();
-    doc.setFontSize(20);
-    doc.text("My Grocery List 🛒", 20, 20);
-    doc.setFontSize(12);
-    let y = 30;
-    data.forEach((item, index) => {
-      if (y > 280) { doc.addPage(); y = 20; }
-      doc.text(`${index + 1}. ${item}`, 20, y);
-      y += 10;
-    });
-    doc.save("grocery_list.pdf");
+    const version = request.current.version;
+    try {
+      const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
+      if (!active(version)) return;
+      const doc = new jsPDF();
+      doc.setFontSize(20); doc.text('My Grocery List', 14, 20);
+      autoTable(doc, groceryPDFTable(items));
+      doc.save('grocery_list.pdf');
+    } catch (_) {
+      if (active(version)) update({ ...current.current, error: 'PDF export failed. Please try again.' });
+    }
   };
+  const shareWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(`*My Grocery List*\n\n${groceryText(items)}`)}`, '_blank', 'noopener,noreferrer');
 
-  const shareWhatsApp = () => {
-    const data = getExportData();
-    if (data.length === 0) return alert("Nothing to export!");
-    const text = `*My Grocery List* 🛒\n\n${data.join("\n")}`;
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
-  };
-
-  return (
-    <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>Grocery List 🛒</h2>
-        {savedList && (
-          <button className="btn btn-danger btn-sm" onClick={handleDeleteList}>Delete List</button>
-        )}
-      </div>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      {/* Persistence Controls */}
-      <div className="card p-3 mb-4 bg-white shadow-sm">
-        {savedList ? (
-          <div className="d-flex justify-content-between align-items-center">
-            <span className="text-secondary">Using Saved List ({new Date(savedList.createdAt).toLocaleDateString()})</span>
-            {weeklyPlan.length > 0 && (
-              <button className="btn btn-warning btn-sm" onClick={handleGenerateList}>
-                🔄 Regenerate from Current Plan
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="text-center">
-            <p className="mb-2">No active list found.</p>
-            {weeklyPlan.length > 0 ? (
-              <button className="btn btn-success" onClick={handleGenerateList} disabled={loading}>
-                {loading ? "Generating..." : "✨ Generate List from Weekly Plan"}
-              </button>
-            ) : (
-              <p className="text-muted">Create a meal plan first to generate a list.</p>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Main List UI (Only if list exists) */}
-      {savedList && (
-        <>
-          {/* Export Actions */}
-          <div className="card p-2 bg-light mb-3">
-            <div className="d-flex gap-2 justify-content-center">
-              <button className="btn btn-outline-primary btn-sm" onClick={exportCSV}>📄 CSV</button>
-              <button className="btn btn-outline-danger btn-sm" onClick={exportPDF}>📕 PDF</button>
-              <button className="btn btn-outline-success btn-sm" onClick={shareWhatsApp}>💬 WhatsApp</button>
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <input
-            type="text"
-            className="form-control mb-3"
-            placeholder="Search ingredients..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
-          {filteredList.length === 0 ? (
-            <p>No ingredients found.</p>
-          ) : (
-            <ul className="list-group">
-              {filteredList.slice(0, showAll ? filteredList.length : 5).map((item, index) => (
-                <li
-                  key={index}
-                  className={`list-group-item d-flex justify-content-between align-items-center ${item.checked ? 'bg-light text-decoration-line-through text-muted' : ''}`}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => handleToggleItem(index)}
-                >
-                  <span>{item.name}</span>
-                  <input
-                    type="checkbox"
-                    checked={item.checked}
-                    onChange={() => { }} // handled by li click
-                    className="form-check-input"
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {/* Show More / Show Less Button */}
-          {filteredList.length > 5 && (
-            <button className="btn btn-secondary mt-3" onClick={() => setShowAll(!showAll)}>
-              {showAll ? "▲ Show Less" : "▼ Show More"}
-            </button>
-          )}
-        </>
-      )}
+  return <div className="container mt-4">
+    <div className="d-flex justify-content-between align-items-center mb-3">
+      <h2>Grocery List 🛒</h2>
+      {savedList && <button className="btn btn-danger btn-sm" disabled={busy || view.conflict} onClick={deleteList}>Delete List</button>}
     </div>
-  );
+    <label htmlFor="grocery-week">Week beginning Monday</label>
+    <input id="grocery-week" type="date" className="form-control mb-2" value={weekStart} disabled={busy}
+      onChange={event => { if (event.target.value) selectWeek(event.target.value); }} />
+    {(view.error || planRecord.error) && <div role="alert" className="alert alert-danger">{view.error || planRecord.error}</div>}
+    {busy && <p role="status">Loading or saving groceries...</p>}
+    <button className="btn btn-secondary btn-sm mb-2" disabled={busy} onClick={reload}>Reload this week</button>
+    {view.legacy.length > 0 && <div className="mb-2">
+      <label htmlFor="legacy-grocery">Saved list</label>
+      <select id="legacy-grocery" className="form-control" value={legacyId} disabled={busy}
+        onChange={event => { request.current.version += 1; setLegacyId(event.target.value); setSearch(''); }}>
+        <option value="">This week's list</option>
+        {view.legacy.map(list => <option key={list._id} value={list._id}>Older undated list ({new Date(list.createdAt).toLocaleDateString()})</option>)}
+      </select>
+    </div>}
+    <div className="card p-3 mb-4 bg-white shadow-sm">
+      {savedList ? <div className="d-flex justify-content-between align-items-center">
+        <span className="text-secondary">{legacyId ? 'Older undated list — not assigned to this week' : `Saved list for ${weekStart}`}</span>
+        <button className="btn btn-warning btn-sm" disabled={!canGenerate} onClick={generateList}>🔄 Regenerate from Current Plan</button>
+      </div> : <div className="text-center">
+        <p className="mb-2">No saved list for this week.</p>
+        <button className="btn btn-success" disabled={!canGenerate} onClick={generateList}>✨ Generate List from Weekly Plan</button>
+        {planRecord.loaded && weeklyPlan.length === 0 && <p className="text-muted">Create a meal plan for this week first.</p>}
+      </div>}
+      {savedList?.weekStart === weekStart && savedList.sourcePlanRevision !== planRecord.revision && planRecord.loaded &&
+        <p role="status" className="text-warning">The saved plan has changed. Regenerate this list to use it.</p>}
+    </div>
+    {savedList && <>
+      <div className="card p-2 bg-light mb-3">
+        <div className="d-flex gap-2 justify-content-center">
+          <button className="btn btn-outline-primary btn-sm" disabled={!items.length || busy || view.conflict} onClick={exportCSV}>📄 CSV</button>
+          <button className="btn btn-outline-danger btn-sm" disabled={!items.length || busy || view.conflict} onClick={exportPDF}>📕 PDF</button>
+          <button className="btn btn-outline-success btn-sm" disabled={!items.length || busy || view.conflict} onClick={shareWhatsApp}>💬 WhatsApp</button>
+        </div>
+        <small>Exports include the complete saved list, including checked items.</small>
+      </div>
+      <input type="text" className="form-control mb-3" placeholder="Search ingredients..." value={search} onChange={event => setSearch(event.target.value)} />
+      {filteredList.length === 0 ? <p>No ingredients found.</p> : <ul className="list-group">
+        {filteredList.slice(0, showAll ? filteredList.length : 5).map(item => <li key={item._id}
+          className={`list-group-item d-flex justify-content-between align-items-center ${item.checked ? 'bg-light text-decoration-line-through text-muted' : ''}`}
+          style={{ cursor: 'pointer' }} onClick={() => toggleItem(item)}>
+          <span>{item.name}{item.amount ? `: ${item.amount}` : ''}</span>
+          <input type="checkbox" aria-label={`Bought ${item.name}${item.amount ? ` ${item.amount}` : ''}`} checked={item.checked}
+            disabled={busy || view.conflict} onClick={event => event.stopPropagation()} onChange={() => toggleItem(item)} className="form-check-input" />
+        </li>)}
+      </ul>}
+      {filteredList.length > 5 && <button className="btn btn-secondary mt-3" onClick={() => setShowAll(!showAll)}>{showAll ? '▲ Show Less' : '▼ Show More'}</button>}
+    </>}
+  </div>;
 }
 
 export default GroceryList;
