@@ -4,7 +4,7 @@ const groceryController = require("../controllers/groceryController");
 const requireAuth = require("../middleware/requireAuth");
 const validate = require("../middleware/validate");
 const { validateObjectId } = require("../middleware/validators/commonValidator");
-const { body } = require('express-validator');
+const { body, query } = require('express-validator');
 
 // Basic validator for creating/updating lists (could be moved to separate file)
 const listValidator = [
@@ -34,6 +34,7 @@ router.delete(
     "/:id",
     requireAuth,
     validateObjectId('id'),
+    query('revision').custom(value => typeof value === 'string' && /^\d+$/.test(value)).withMessage('A numeric revision is required'),
     validate,
     groceryController.deleteList
 );
