@@ -1,0 +1,63 @@
+.user-dialog {
+    padding: .75rem;
+    overflow-y: auto;
+}
+
+.user-dialog .modal-dialog {
+    width: 100%;
+    max-width: min(100%, 32rem);
+    min-height: calc(100% - 1.5rem);
+    margin: .75rem auto;
+}
+
+.user-dialog .modal-dialog.modal-lg {
+    max-width: min(100%, 50rem);
+}
+
+.user-dialog .modal-content {
+    min-width: 0;
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+}
+
+.user-dialog .modal-header,
+.user-dialog .modal-footer {
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.user-dialog .modal-title,
+.user-dialog-suggestion-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.user-dialog .modal-title {
+    flex: 1;
+}
+
+.user-dialog .modal-header .btn-close {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.user-dialog .btn {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.user-dialog-suggestion {
+    flex-wrap: wrap;
+    gap: .75rem;
+}
+
+.user-dialog-suggestion-text {
+    flex: 1 1 12rem;
+}
+
+.user-dialog-suggestion > button {
+    flex: 0 0 auto;
+}

@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import api from '../utils/api';
+import useDialogFocus from '../hooks/useDialogFocus';
+import './UserDialogs.css';
 
 function StarterPackModal({ isOpen, onClose, onImport, onSwitch }) {
     const [loading, setLoading] = useState(false);
+    const dialogRef = useDialogFocus(isOpen, loading ? undefined : onClose);
 
     if (!isOpen) return null;
 
@@ -23,11 +26,11 @@ function StarterPackModal({ isOpen, onClose, onImport, onSwitch }) {
     };
 
     return (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div ref={dialogRef} className="modal show d-block user-dialog" role="dialog" aria-modal="true" aria-labelledby="starter-pack-title" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
             <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                     <div className="modal-header bg-success text-white">
-                        <h5 className="modal-title">Welcome to Meal Planner! 🥕</h5>
+                        <h5 className="modal-title" id="starter-pack-title">Welcome to Meal Planner! 🥕</h5>
                     </div>
                     <div className="modal-body text-center">
                         <p className="lead">Your meal list is looking a little empty.</p>

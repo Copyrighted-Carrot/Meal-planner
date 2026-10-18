@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import api from '../utils/api';
+import useDialogFocus from '../hooks/useDialogFocus';
+import './UserDialogs.css';
 
 function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
     const [ingredients, setIngredients] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [addingId, setAddingId] = useState(null);
+    const dialogRef = useDialogFocus(isOpen, onClose);
 
     if (!isOpen) return null;
 
@@ -39,12 +42,12 @@ function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
     };
 
     return (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <div ref={dialogRef} className="modal show d-block user-dialog" role="dialog" aria-modal="true" aria-labelledby="smart-fridge-title" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
             <div className="modal-dialog modal-dialog-centered modal-lg">
                 <div className="modal-content">
                     <div className="modal-header bg-info text-white">
-                        <h5 className="modal-title">Smart Fridge Match 🧊</h5>
-                        <button type="button" className="btn-close" onClick={onClose}></button>
+                        <h5 className="modal-title" id="smart-fridge-title">Smart Fridge Match 🧊</h5>
+                        <button type="button" className="btn-close" aria-label="Close Smart Fridge" onClick={onClose}></button>
                     </div>
                     <div className="modal-body">
                         {!suggestions.length && !loading && (
@@ -70,8 +73,8 @@ function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
                                 <h5>Top Matches:</h5>
                                 <div className="list-group">
                                     {suggestions.map((meal) => (
-                                        <div key={meal._id} className="list-group-item d-flex justify-content-between align-items-center">
-                                            <div>
+                                        <div key={meal._id} className="list-group-item d-flex justify-content-between align-items-center user-dialog-suggestion">
+                                            <div className="user-dialog-suggestion-text">
                                                 <strong>{meal.name}</strong> <br />
                                                 <small className="text-muted">{meal.ingredients.join(", ")}</small>
                                             </div>

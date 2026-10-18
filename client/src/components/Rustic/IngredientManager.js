@@ -220,7 +220,7 @@ function IngredientManager({ ingredients, onChange }) {
     };
 
     return (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="ingredient-manager" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
             {/* Mode Toggle */}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -293,7 +293,7 @@ function IngredientManager({ ingredients, onChange }) {
                     </div>
                 ) : (
                     /* SINGLE ENTRY MODE */
-                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', padding: '10px', gap: '8px' }}>
+                    <div className="ingredient-entry" style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', padding: '10px', gap: '8px' }}>
 
                         <div style={{ width: '30px', height: '30px', flexShrink: 0 }}>
                             <IngredientsIcon />
@@ -327,6 +327,7 @@ function IngredientManager({ ingredients, onChange }) {
                         {/* Name */}
                         <input
                             type="text"
+                            className="ingredient-name-input"
                             value={tempName}
                             onChange={(e) => setTempName(e.target.value)}
                             onKeyDown={handleKeyDown}
@@ -373,7 +374,7 @@ function IngredientManager({ ingredients, onChange }) {
                     const isInvalid = !chip.qty || chip.qty.trim() === '' || chip.qty === '0' || !chip.name || chip.name.trim() === '' || chip.unit === 'x';
 
                     return (
-                        <div key={index} style={{
+                        <div className="ingredient-chip" key={index} style={{
                             display: 'flex',
                             alignItems: 'center',
                             backgroundColor: isInvalid ? '#ffebee' : '#fff8e1', // Light red bg if invalid
@@ -388,7 +389,7 @@ function IngredientManager({ ingredients, onChange }) {
                             cursor: 'pointer'
                         }}>
                             {editingIndex === index ? (
-                                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
+                                <div className="ingredient-chip-edit" style={{ display: 'flex', gap: '5px', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
                                     <input
                                         type="text"
                                         value={chip.qty}
@@ -413,7 +414,7 @@ function IngredientManager({ ingredients, onChange }) {
                                     <button type="button" onClick={(e) => { e.stopPropagation(); setEditingIndex(null); }} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>✅</button>
                                 </div>
                             ) : (
-                                <div onClick={() => setEditingIndex(index)} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <div className="ingredient-chip-label" onClick={() => setEditingIndex(index)} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                                     <span>{formatIngredient(chip)}</span>
                                     {isInvalid && <span style={{ fontSize: '0.8rem', color: '#d32f2f', marginLeft: '4px' }}>⚠️</span>}
                                 </div>

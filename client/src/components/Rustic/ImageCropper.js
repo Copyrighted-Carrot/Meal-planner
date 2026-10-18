@@ -2,11 +2,13 @@ import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../../utils/cropUtils';
 import rusticCarrotBtn from '../../assets/rustic-carrot-btn.png';
+import useDialogFocus from '../../hooks/useDialogFocus';
 
 const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+    const dialogRef = useDialogFocus(true, onCancel);
 
     const onCropChange = (crop) => {
         setCrop(crop);
@@ -31,7 +33,7 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
     };
 
     return (
-        <div style={{
+        <div ref={dialogRef} className="recipe-crop-overlay" role="dialog" aria-modal="true" aria-label="Crop recipe image" tabIndex={-1} style={{
             position: 'fixed',
             top: 0,
             left: 0,
@@ -41,13 +43,11 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
             zIndex: 10000,
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
+            justifyContent: 'flex-start',
             alignItems: 'center',
         }}>
-            <div style={{
+            <div className="recipe-crop-stage" style={{
                 position: 'relative',
-                width: '90%',
-                height: '70%',
                 backgroundColor: '#333',
                 borderRadius: '8px',
                 overflow: 'hidden',
@@ -65,14 +65,11 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
                 />
             </div>
 
-            <div style={{
-                marginTop: '20px',
+            <div className="recipe-crop-controls" style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '15px',
-                width: '80%',
-                maxWidth: '400px'
             }}>
                 <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', color: 'white' }}>
                     <span style={{ fontWeight: 'bold' }}>Zoom:</span>
@@ -82,14 +79,15 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
                         min={1}
                         max={3}
                         step={0.1}
-                        aria-labelledby="Zoom"
+                        aria-label="Zoom"
                         onChange={(e) => setZoom(Number(e.target.value))}
                         style={{ width: '100%', cursor: 'pointer' }}
                     />
                 </div>
 
-                <div style={{ display: 'flex', gap: '20px' }}>
+                <div className="recipe-crop-actions">
                     <button
+                        type="button"
                         onClick={onCancel}
                         style={{
                             padding: '10px 20px',
@@ -106,6 +104,7 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
                     </button>
 
                     <button
+                        type="button"
                         onClick={handleSave}
                         style={{
                             padding: '10px 30px',

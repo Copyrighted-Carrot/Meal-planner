@@ -44,12 +44,13 @@ const OccasionWheel = ({ selected, onSelect }) => {
     return (
         <div style={{
             width: `${displaySize}px`,
-            height: `${displaySize}px`,
+            maxWidth: '100%',
+            aspectRatio: '1',
             position: 'relative',
             filter: 'drop-shadow(0px 5px 10px rgba(0,0,0,0.5))',
-            marginTop: '-10px'
+            margin: '0 auto'
         }}>
-            <svg width={displaySize} height={displaySize} viewBox={`0 0 ${internalSize} ${internalSize}`}>
+            <svg width="100%" viewBox={`0 0 ${internalSize} ${internalSize}`} style={{ display: 'block', height: 'auto' }}>
                 <defs>
                     {/* Pattern Definition - Scaled */}
                     <pattern id="woodPattern" patternUnits="userSpaceOnUse" width={internalSize} height={internalSize}>
@@ -122,6 +123,16 @@ const OccasionWheel = ({ selected, onSelect }) => {
                             key={seg.id}
                             transform={`rotate(${angle} ${center} ${center})`}
                             onClick={() => onSelect(seg.id)}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={seg.label}
+                            aria-pressed={isSelected}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                    event.preventDefault();
+                                    onSelect(seg.id);
+                                }
+                            }}
                             style={{ cursor: 'pointer' }}
                         >
                             {/* Invisible wedge for hit area */}
