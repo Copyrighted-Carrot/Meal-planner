@@ -130,27 +130,13 @@ const Register = () => {
                         </button>
                     </form>
 
-                    <div className="d-flex justify-content-center google-btn-wrapper" style={{ position: 'relative' }}>
-                        {/* Visual Button */}
-                        <div className="wood-btn"></div>
-
-                        {/* Functional Overlay */}
-                        <div style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            opacity: 0.01,
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            overflow: 'hidden'
-                        }}>
+                    <div className="google-btn-wrapper">
+                        <div className="wood-btn" aria-hidden="true"></div>
+                        <div className="google-auth-control">
                             <GoogleLogin
                                 onSuccess={handleGoogleSuccess}
                                 onError={() => say("🥕 Google Sign-In Failed")}
-                                width="700"
+                                width="240"
                             />
                         </div>
                     </div>
