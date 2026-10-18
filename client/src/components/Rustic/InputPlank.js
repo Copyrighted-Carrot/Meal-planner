@@ -23,7 +23,6 @@ const InputPlank = ({
         backgroundPosition: 'center',
         borderRadius: '0', // The image has the rounded shape
         filter: 'drop-shadow(0 5px 10px rgba(0,0,0,0.5))', // External shadow only
-        padding: '18px 50px', // Generous padding so text doesn't hit the ornate ends
         display: 'flex',
         alignItems: 'center',
         gap: '15px',
@@ -43,6 +42,7 @@ const InputPlank = ({
         fontSize: '1.4rem', // Large game text
         fontWeight: 'bold',
         width: '100%',
+        minWidth: 0,
         outline: 'none',
         boxShadow: 'none',
         resize: 'none',
@@ -73,7 +73,17 @@ const InputPlank = ({
     };
 
     return (
-        <div style={plankStyle} onClick={handlePlankClick} className="rustic-plank">
+        <div style={plankStyle} onClick={handlePlankClick} className="rustic-plank"
+            role={onClick ? 'button' : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            aria-label={onClick ? label : undefined}
+            onKeyDown={onClick ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onClick(event);
+                }
+            } : undefined}
+        >
             {/* Inject Scoped Scrollbar Styles */}
             <style>{`
                 .rustic-scroll::-webkit-scrollbar {
@@ -111,6 +121,7 @@ const InputPlank = ({
                 <textarea
                     className="rustic-scroll"
                     name={name}
+                    aria-label={label}
                     value={value}
                     onChange={onChange}
                     placeholder={placeholder || label}
@@ -130,6 +141,8 @@ const InputPlank = ({
                 <input
                     type={type}
                     name={name}
+                    aria-label={label}
+                    tabIndex={onClick ? -1 : undefined}
                     value={value}
                     onChange={onChange}
                     placeholder={placeholder || label}

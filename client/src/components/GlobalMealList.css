@@ -1,0 +1,35 @@
+.public-meal-library {
+  width: 100%;
+  min-width: 0;
+  max-width: 1500px;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
+}
+
+.public-meal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+  min-width: 0;
+}
+
+.public-meal-item,
+.public-meal-item .card,
+.public-meal-item .card-body {
+  min-width: 0;
+}
+
+.public-meal-empty {
+  grid-column: 1 / -1;
+}
+
+.public-meal-item .badge {
+  max-width: 100%;
+  white-space: normal;
+}
+
+.public-meal-item .btn {
+  min-height: 2.75rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

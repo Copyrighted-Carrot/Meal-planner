@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom"; // Import hooks
 import { useCarrot } from "../context/CarrotContext";
 import { useUserData } from '../context/UserDataContext';
 import { captureSession, isCurrentSession } from '../utils/session';
+import useDialogFocus from '../hooks/useDialogFocus';
 
 import ParchmentContainer from "./Rustic/ParchmentContainer";
 import InputPlank from "./Rustic/InputPlank";
@@ -18,6 +19,7 @@ import ImageCropper from "./Rustic/ImageCropper";
 import ParchmentHeader from "./Rustic/ParchmentHeader";
 import OccasionWheel from "./Rustic/OccasionWheel";
 import rusticSaveBtn from "../assets/rustic-save-btn.png";
+import './AddMeal.css';
 
 // Icon Image Wrappers
 const PenIcon = (props) => <img src={iconPen} alt="Pen" style={{ ...props.style, width: '100%', height: '100%', fill: undefined, objectFit: 'contain' }} />;
@@ -40,6 +42,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
   const { assertSession, refreshMeals } = useUserData();
   const [imageRejected, setImageRejected] = useState(false); // Track if overly large image was rejected
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const previewDialogRef = useDialogFocus(showPreviewModal, () => setShowPreviewModal(false));
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState(null);
 
@@ -259,21 +262,10 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
   const fileInputRef = React.useRef(null); // Ref for hidden file input
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      zIndex: 50,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      overflow: 'hidden',
-    }}>
+    <div className="add-meal-page">
 
       {/* MAIN LAYOUT: Single Wide Scroll with integrated Wheel */}
-      <div style={{ position: 'relative', marginTop: '0', transform: 'scale(0.9)' }}>
+      <div className="add-meal-notebook">
         <ParchmentContainer
           title="Craft Your Feast"
           sidePanel={
@@ -325,30 +317,19 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
                 placeholder={image ? "Photo Selected" : "Upload Photo"}
               />
 
-              {/* Photo Frame - Absolute Positioned */}
+              {/* The photo remains in document flow as the form grows. */}
               {previewUrl && (
-                <div
+                <button
+                  type="button"
+                  className="recipe-photo-preview"
                   onClick={() => setShowPreviewModal(true)}
-                  style={{
-                    position: 'absolute',
-                    top: '50px',
-                    left: '460px',
-                    width: '220px',
-                    height: '220px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 20,
-                    cursor: 'pointer',
-                    transition: 'transform 0.1s'
-                  }}
                   onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
                   onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                   onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                   title="Click to view/edit"
                 >
                   <img src={previewUrl} alt="Preview" style={{ height: '100%', maxWidth: '100%', objectFit: 'contain' }} />
-                </div>
+                </button>
               )}
             </div>
 
@@ -357,20 +338,16 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
             {/* Action */}
             {/* Action */}
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
-              <img
-                src={rusticSaveBtn}
-                alt="Save Recipe"
-                onClick={(e) => { e.preventDefault(); handleSubmit(e); }}
-                style={{
-                  width: '220px', // Compressed further
-                  cursor: 'pointer',
-                  filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))',
-                  transition: 'transform 0.1s'
-                }}
+              <button
+                type="button"
+                className="recipe-save-button"
+                onClick={(event) => { event.preventDefault(); handleSubmit(event); }}
                 onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
                 onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-              />
+              >
+                <img src={rusticSaveBtn} alt="Save Recipe" />
+              </button>
             </div>
 
           </form>
@@ -379,7 +356,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
 
       {/* Image Preview Modal */}
       {showPreviewModal && ReactDOM.createPortal(
-        <div style={{
+        <div ref={previewDialogRef} className="recipe-preview-overlay" role="dialog" aria-modal="true" aria-label="Recipe image preview" tabIndex={-1} style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.85)',
@@ -390,14 +367,12 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
           backdropFilter: 'blur(5px)'
         }} onClick={() => setShowPreviewModal(false)}>
 
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '20px' }} onClick={e => e.stopPropagation()}>
+          <div className="recipe-preview-dialog" onClick={e => e.stopPropagation()}>
             {/* Enlarged Image */}
             <img
               src={previewUrl}
               alt="Full Size"
               style={{
-                maxHeight: '80vh',
-                maxWidth: '70vw',
                 border: '5px solid #5d4037',
                 borderRadius: '8px',
                 boxShadow: '0 0 20px rgba(0,0,0,0.5)'
@@ -405,10 +380,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
             />
 
             {/* Side Options */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '15px',
+            <div className="recipe-preview-actions" style={{
               backgroundColor: '#deb887',
               padding: '15px',
               borderRadius: '12px',
@@ -416,6 +388,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
               boxShadow: '0 4px 8px rgba(0,0,0,0.4)'
             }}>
               <button
+                type="button"
                 onClick={handleReplaceClick}
                 style={{
                   background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer',
@@ -429,6 +402,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
                 🔄
               </button>
               <button
+                type="button"
                 onClick={handleRemoveImage}
                 style={{
                   background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer',
@@ -441,6 +415,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
               >
                 🗑️
               </button>
+              <button type="button" className="recipe-preview-close" onClick={() => setShowPreviewModal(false)} aria-label="Close image preview">✕</button>
             </div>
           </div>
         </div>,

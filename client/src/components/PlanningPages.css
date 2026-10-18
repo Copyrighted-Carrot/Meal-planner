@@ -1,0 +1,117 @@
+.planner-page,
+.grocery-page {
+  overflow-wrap: anywhere;
+}
+
+.planner-page .form-control,
+.grocery-page .form-control {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.planner-page .btn,
+.grocery-page .btn {
+  max-width: 100%;
+  white-space: normal;
+}
+
+.planner-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.planner-table th,
+.planner-table td {
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.planner-nutrition-note {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: normal;
+}
+
+.planner-slot-label {
+  display: none;
+}
+
+.grocery-summary-actions {
+  justify-content: space-between;
+}
+
+.grocery-summary {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.grocery-export-actions {
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.grocery-page .grocery-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.grocery-item-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.grocery-row .form-check-input {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+}
+
+/* Keep one accessible table; narrow screens read it one day at a time. */
+@media (max-width: 48rem) {
+  .planner-table,
+  .planner-table tbody,
+  .planner-table tr,
+  .planner-table tbody th {
+    display: block;
+    width: 100%;
+  }
+
+  .planner-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .planner-table tbody tr {
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid #b99c72;
+  }
+
+  .planner-table tbody th {
+    background: #efe0bf;
+  }
+
+  .planner-table td {
+    display: grid;
+    grid-template-columns: minmax(5.5rem, 0.65fr) minmax(0, 1.6fr);
+    gap: 0.75rem;
+  }
+
+  .planner-table td > span {
+    min-width: 0;
+  }
+
+  .planner-slot-label {
+    display: block;
+    font-weight: 600;
+  }
+}

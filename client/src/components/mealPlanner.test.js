@@ -91,3 +91,26 @@ test('a conflicting save requires visible reload before generation can resume', 
     expect(container.textContent).toContain('Saved snack');
     expect(button('Generate New Plan').disabled).toBe(false);
 });
+
+test('the single responsive table keeps every meal associated with its day and slot', async () => {
+    respond = config => Promise.resolve(reply(config, { weekStart: config.params.weekStart, revision: 2, plan: savedPlan }));
+    await mount();
+    const table = container.querySelector('table');
+    expect(container.querySelectorAll('table')).toHaveLength(1);
+    expect(document.getElementById(table.getAttribute('aria-labelledby')).textContent).toContain('Weekly Meal Plan');
+    const rows = table.querySelectorAll('tbody tr');
+    expect(rows).toHaveLength(7);
+    rows.forEach((row, index) => {
+        const dayHeader = row.querySelector('th[scope="row"]');
+        expect(dayHeader.textContent).toContain(PLAN_DAYS[index]);
+        const cells = row.querySelectorAll('td');
+        expect(cells).toHaveLength(4);
+        cells.forEach(cell => {
+            const [dayId, slotId] = cell.getAttribute('headers').split(' ');
+            expect(document.getElementById(dayId)).toBe(dayHeader);
+            const slot = document.getElementById(slotId).textContent.toLowerCase();
+            expect(PLAN_SLOTS).toContain(slot);
+            expect(cell.textContent).toContain(`Saved ${slot}`);
+        });
+    });
+});

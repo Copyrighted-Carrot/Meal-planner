@@ -87,7 +87,7 @@ function MealList() {
       <MealListTitle />
 
       {/* Control Bar */}
-      <div style={{ maxWidth: '1400px', margin: '0 auto 20px', display: 'flex', justifyContent: 'flex-end', padding: '0 20px', gap: '10px' }}>
+      <div className="rustic-meal-controls">
         {!isSelectionMode ? (
           <button className="btn btn-outline-dark" style={{ fontWeight: 'bold' }} onClick={toggleSelectionMode}>
             ✨ Select Multiple

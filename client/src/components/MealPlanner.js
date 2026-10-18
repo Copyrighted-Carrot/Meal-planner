@@ -3,6 +3,14 @@ import { useUserData } from "../context/UserDataContext";
 import { PLAN_DAYS } from "../utils/planDate";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import "./PlanningPages.css";
+
+const planColumns = [
+  ["breakfast", "Breakfast"],
+  ["lunch", "Lunch"],
+  ["snack", "Snack"],
+  ["dinner", "Dinner"],
+];
 
 function MealPlanner({ meals }) {
   const { weeklyPlan, weekStart, selectWeek, planRecord, loadPlan, savePlan, mealsLoading, mealsError } = useUserData();
@@ -101,7 +109,7 @@ function MealPlanner({ meals }) {
 
 
   return (
-    <div className="container mt-4">
+    <div className="page-surface planner-page">
       <label htmlFor="plan-week">Week beginning Monday</label>
       <input id="plan-week" type="date" className="form-control mb-2" value={weekStart} disabled={planRecord.saving}
         onChange={event => { if (event.target.value) selectWeek(event.target.value); }} />
@@ -115,33 +123,30 @@ function MealPlanner({ meals }) {
         <button className="btn btn-secondary ms-2" disabled={busy || !planRecord.loaded}
           onClick={() => savePlan(planRecord.legacyPlan).catch(() => {})}>Copy older plan to this week</button>
       </div>}
-      <h2>Weekly Meal Plan 📅</h2>
+      <h2 id="planner-heading">Weekly Meal Plan 📅</h2>
       {weeklyPlan.length === 0 ? (
         <p>{meals.length ? 'No saved plan for this week. Generate one below.' : 'No meals available. Add some meals first!'}</p>
       ) : (
         <>
-          <table className="table">
+          <table className="table planner-table" aria-labelledby="planner-heading" role="table">
             <thead>
-              <tr>
-                <th>Day</th>
-                <th>Breakfast</th>
-                <th>Lunch</th>
-                <th>Snack</th>
-                <th>Dinner</th>
+              <tr role="row">
+                <th scope="col" role="columnheader">Day</th>
+                {planColumns.map(([slot, label]) => <th key={slot} id={`plan-column-${slot}`} scope="col" role="columnheader">{label}</th>)}
               </tr>
             </thead>
             <tbody>
               {weeklyPlan.map((dayPlan) => {
                 return (
-                  <tr key={dayPlan.day}>
-                    <td>
+                  <tr key={dayPlan.day} role="row">
+                    <th id={`plan-day-${dayPlan.day}`} scope="row" role="rowheader">
                       <strong>{dayPlan.day}</strong>
-                      <div className="mt-1" style={{ fontSize: '0.8rem' }}>Nutrition unknown: portions are not verified.</div>
-                    </td>
-                    <td>{dayPlan.breakfast ? dayPlan.breakfast.name : "-"}</td>
-                    <td>{dayPlan.lunch ? dayPlan.lunch.name : "-"}</td>
-                    <td>{dayPlan.snack ? dayPlan.snack.name : "-"}</td>
-                    <td>{dayPlan.dinner ? dayPlan.dinner.name : "-"}</td>
+                      <div className="planner-nutrition-note">Nutrition unknown: portions are not verified.</div>
+                    </th>
+                    {planColumns.map(([slot, label]) => <td key={slot} role="cell" headers={`plan-day-${dayPlan.day} plan-column-${slot}`}>
+                      <span className="planner-slot-label" aria-hidden="true">{label}</span>
+                      <span>{dayPlan[slot] ? dayPlan[slot].name : "-"}</span>
+                    </td>)}
                   </tr>
                 );
               })}
@@ -151,7 +156,7 @@ function MealPlanner({ meals }) {
           {/* Share Plan Actions */}
           <div className="card mt-4 p-3 bg-light">
             <h4>Share Meal Plan 📅</h4>
-            <div className="d-flex gap-2 mt-2">
+            <div className="page-actions mt-2">
               <button className="btn btn-outline-primary" onClick={exportPlanCSV}>📄 Export CSV</button>
               <button className="btn btn-outline-danger" onClick={exportPlanPDF}>📕 Export PDF</button>
               <button className="btn btn-outline-success" onClick={sharePlanWhatsApp}>💬 Share on WhatsApp</button>

@@ -3,6 +3,7 @@ import api from '../utils/api';
 import { useUserData } from '../context/UserDataContext';
 import { captureSession, isCurrentSession } from '../utils/session';
 import { groceryCSV, groceryPDFTable, groceryText } from '../utils/groceryExport';
+import './PlanningPages.css';
 
 const emptyList = weekStart => ({ weekStart, list: null, legacy: [], loaded: false, busy: false, error: '', conflict: false });
 
@@ -122,8 +123,8 @@ function GroceryList() {
   };
   const shareWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(`*My Grocery List*\n\n${groceryText(items)}`)}`, '_blank', 'noopener,noreferrer');
 
-  return <div className="container mt-4">
-    <div className="d-flex justify-content-between align-items-center mb-3">
+  return <div className="page-surface grocery-page">
+    <div className="page-heading mb-3">
       <h2>Grocery List 🛒</h2>
       {savedList && <button className="btn btn-danger btn-sm" disabled={busy || view.conflict} onClick={deleteList}>Delete List</button>}
     </div>
@@ -142,8 +143,8 @@ function GroceryList() {
       </select>
     </div>}
     <div className="card p-3 mb-4 bg-white shadow-sm">
-      {savedList ? <div className="d-flex justify-content-between align-items-center">
-        <span className="text-secondary">{legacyId ? 'Older undated list — not assigned to this week' : `Saved list for ${weekStart}`}</span>
+      {savedList ? <div className="page-actions grocery-summary-actions">
+        <span className="text-secondary grocery-summary">{legacyId ? 'Older undated list — not assigned to this week' : `Saved list for ${weekStart}`}</span>
         <button className="btn btn-warning btn-sm" disabled={!canGenerate} onClick={generateList}>🔄 Regenerate from Current Plan</button>
       </div> : <div className="text-center">
         <p className="mb-2">No saved list for this week.</p>
@@ -155,19 +156,19 @@ function GroceryList() {
     </div>
     {savedList && <>
       <div className="card p-2 bg-light mb-3">
-        <div className="d-flex gap-2 justify-content-center">
+        <div className="page-actions grocery-export-actions">
           <button className="btn btn-outline-primary btn-sm" disabled={!items.length || busy || view.conflict} onClick={exportCSV}>📄 CSV</button>
           <button className="btn btn-outline-danger btn-sm" disabled={!items.length || busy || view.conflict} onClick={exportPDF}>📕 PDF</button>
           <button className="btn btn-outline-success btn-sm" disabled={!items.length || busy || view.conflict} onClick={shareWhatsApp}>💬 WhatsApp</button>
         </div>
         <small>Exports include the complete saved list, including checked items.</small>
       </div>
-      <input type="text" className="form-control mb-3" placeholder="Search ingredients..." value={search} onChange={event => setSearch(event.target.value)} />
+      <input type="text" className="form-control mb-3" aria-label="Search ingredients" placeholder="Search ingredients..." value={search} onChange={event => setSearch(event.target.value)} />
       {filteredList.length === 0 ? <p>No ingredients found.</p> : <ul className="list-group">
         {filteredList.slice(0, showAll ? filteredList.length : 5).map(item => <li key={item._id}
-          className={`list-group-item d-flex justify-content-between align-items-center ${item.checked ? 'bg-light text-decoration-line-through text-muted' : ''}`}
-          style={{ cursor: 'pointer' }} onClick={() => toggleItem(item)}>
-          <span>{item.name}{item.amount ? `: ${item.amount}` : ''}</span>
+          className={`list-group-item grocery-row ${item.checked ? 'bg-light text-decoration-line-through text-muted' : ''}`}
+          onClick={() => toggleItem(item)}>
+          <span className="grocery-item-text">{item.name}{item.amount ? `: ${item.amount}` : ''}</span>
           <input type="checkbox" aria-label={`Bought ${item.name}${item.amount ? ` ${item.amount}` : ''}`} checked={item.checked}
             disabled={busy || view.conflict} onClick={event => event.stopPropagation()} onChange={() => toggleItem(item)} className="form-check-input" />
         </li>)}

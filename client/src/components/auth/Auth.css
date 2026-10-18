@@ -2,31 +2,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600&family=Indie+Flower&family=Nunito:wght@400;700;900&display=swap');
 
 .rustic-auth-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: url('../../assets/rustic-bg-final.jpg') no-repeat center center fixed;
+    width: 100%;
+    min-width: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: url('../../assets/rustic-bg-final.jpg') no-repeat center center;
     background-size: cover;
-    /* Dark wood color for margins */
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
     font-family: 'Fredoka', sans-serif;
-    padding: 20px;
-    overflow-y: auto;
-    z-index: 1000;
+    padding: clamp(.5rem, 2vw, 1.5rem);
 }
 
 .rustic-wrapper {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     width: 100%;
-    max-width: 1400px;
-    /* Even wider parchment width */
+    max-width: 60rem;
+    min-width: 0;
+    margin-block: auto;
 }
 
 /* Constrain the form inputs to stay narrow in the middle */
@@ -42,36 +36,32 @@
     position: relative;
     /* Ensure overlapping elements respect z-index */
     z-index: 20;
-    /* Ensure form elements sit ABOVE the massive Google button */
 }
 
-/* Specific shift for inputs/form */
+/* Forms stay in the parchment flow, including when registration needs scrolling. */
 .rustic-wrapper form {
-    top: -20px;
-    /* Shift up 0.2 inch (from -40px) */
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
 
-/* Allow Google button to be wider than inputs */
-/* Allow Google button to be wider than inputs */
-/* Allow Google button to be wider than inputs */
 .google-btn-wrapper {
     position: relative;
-    width: 200px;
-    /* Trimmed even further */
-    height: 30px;
-    /* Trimmed to minimize vertical footprint */
-    margin: 1.5rem auto;
-    /* Restore close spacing */
-    z-index: 10;
-    top: -40px;
-    /* Shift up 0.4 inch */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 25rem;
+    min-width: 0;
+    min-height: 6rem;
+    margin: .5rem auto 1rem;
+    isolation: isolate;
 }
 
 /* Register Link Positioning */
 .rustic-wrapper p.mt-3 {
-    position: relative;
-    top: -40px;
-    /* Shift up 0.4 inch */
+    margin: 1rem 0 0;
+    overflow-wrap: anywhere;
 }
 
 /* 3D Mascot - Peeking */
@@ -94,67 +84,45 @@
 .parchment-card {
     position: relative;
     width: 100%;
+    min-width: 0;
     background: url('../../assets/rustic-parchment.png') no-repeat center center;
-    background-size: 100% 100%;
-    padding: 90px 70px 80px 70px;
-    /* Generous padding to stay within "paper" area */
-    filter: drop-shadow(0 30px 30px rgba(0, 0, 0, 0.8));
+    /* The source has transparent side margins; its paper occupies ~42% of the canvas. */
+    background-size: 240% 100%;
+    padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 4rem);
+    filter: drop-shadow(0 20px 25px rgba(0, 0, 0, .65));
     text-align: center;
     color: #3e2723;
-    z-index: 5;
 }
 
 .auth-header {
     font-family: 'Nunito', sans-serif;
     color: #36281F;
-    /* Deep Coffee */
-    text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.2);
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, .2);
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    margin-bottom: 2rem;
-
-    /* Allow text to be wider */
+    gap: .5rem;
+    margin-bottom: 1.5rem;
     width: 100%;
-    max-width: none;
+    overflow-wrap: anywhere;
 }
 
 .auth-header .brand-name {
-    font-size: 2.2rem;
-    /* Bigger */
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
     font-weight: 900;
-    /* Bolder (Black weight) */
-    white-space: nowrap;
-    /* Force single line */
-    position: relative;
-    left: -15px;
-    /* Shift right ~0.05 inch (from -20px) */
-    top: -25px;
-    /* Maintain vertical position */
+    line-height: 1.2;
 }
 
 .auth-header .slogan {
     font-size: 1.1rem;
     font-weight: 400;
     font-style: italic;
-    opacity: 0.9;
-    position: relative;
-    top: -35px;
-    /* Shift down 0.2 inch (from -55px) */
-    left: -30px;
-    /* Shift right 0.4 inch (from -70px) */
+    opacity: .9;
 }
 
 .auth-header .page-title {
     font-size: 1.5rem;
-    /* Reduced from 2.2rem */
     font-weight: 700;
-    margin-top: 10px;
-    position: relative;
-    top: -40px;
-    /* Shift down 0.2 inch (from -60px) */
-    left: -20px;
-    /* Shift left 0.2 inch */
+    margin: .5rem 0 0;
 }
 
 /* Input Fields - "Carved Slots" */
@@ -183,7 +151,7 @@
     border-radius: 50px;
     /* Pill shape */
     padding: 10px 50px 10px 60px;
-    /* Reduced padding (carrot is outside now) */
+    /* Reserve room for the carrot and trailing field icon. */
     font-family: 'Fredoka', sans-serif;
     font-size: 1.1rem;
     color: #3e2723;
@@ -233,11 +201,9 @@
 /* Left Icon (Carrot) */
 /* Left Icon (Carrot) */
 .rustic-icon.left {
-    left: -20px;
-    /* Moved left ~0.4 inch from 15px */
-    width: 90px;
-    /* Massive size (approx 1 inch +) */
-    height: 90px;
+    left: 0;
+    width: 3.5rem;
+    height: 4.5rem;
     pointer-events: none;
     z-index: 10;
 }
@@ -321,7 +287,7 @@
     font-weight: bold;
     font-size: 1.5rem;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    margin-top: -10px;
+    margin-top: 0;
     /* Reduced from 10px to shift up further 0.2 inch */
     margin-bottom: 20px;
 }
@@ -336,39 +302,21 @@
 }
 
 .wood-btn {
-    /* Google Button Wrapper */
+    position: absolute;
+    inset: 0;
     background: url('../../assets/rustic-google-btn.png') no-repeat center center;
     background-size: 100% 100%;
-    width: 700px;
-    /* Keep massive visual size */
-    height: 200px;
-    /* Increased from 160px (approx +0.4 inch total) */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    /* Centered relative to smaller wrapper */
-    display: flex;
-    align-items: center;
-    justify-content: center;
     pointer-events: none;
-    /* Crucial: Visuals ignore clicks, clicks pass through to layer below if applicable */
-    transition: transform 0.1s;
-    box-shadow: none;
-    /* Remove rectangular shadow ("pavement") */
-    filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.3));
-    /* Shadow that respects transparency */
+    filter: drop-shadow(0 5px 5px rgba(0, 0, 0, .3));
     z-index: -1;
 }
 
 .google-btn-wrapper:hover .wood-btn {
-    filter: brightness(1.1) drop-shadow(0 10px 10px rgba(0, 0, 0, 0.3));
-    transform: translate(-50%, calc(-50% - 3px)) scale(1.03);
-    /* Pop up effect with centering */
+    filter: brightness(1.1) drop-shadow(0 5px 5px rgba(0, 0, 0, .3));
 }
 
 .wood-btn:active {
-    transform: translate(-50%, -50%) scale(0.98);
+    filter: brightness(.95);
 }
 
 .rustic-link {
@@ -399,20 +347,19 @@
 
 .invalid-creds-plank {
     background: url('../../assets/rustic-error-invalid-creds.png') no-repeat center center;
-    background-size: 100% 100%;
-    width: 650px;
-    height: 200px;
+    background-size: contain;
+    width: 100%;
+    max-width: 25rem;
+    height: clamp(5rem, 14vw, 8rem);
+    margin: 0 auto 1rem;
+    filter: drop-shadow(0 5px 5px rgba(0, 0, 0, .3));
+}
+.google-auth-control {
+    max-width: 100%;
+    min-width: 0;
+}
 
-    /* Absolute Positioning to prevent layout shift ("jumping") */
-    position: absolute;
-    top: 105px;
-    /* Shift up 0.2 inch (from 125px) */
-    left: 50%;
-    transform: translateX(-50%);
-
-    filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.3));
-    z-index: 50;
-    /* Increased to sit ABOVE inputs (z-index 20) */
-    pointer-events: none;
-    /* Allows clicks to pass through transparent areas if needed */
+.rustic-auth-container input {
+    min-width: 0;
+    max-width: 100%;
 }

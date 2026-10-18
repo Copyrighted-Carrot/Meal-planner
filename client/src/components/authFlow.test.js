@@ -20,7 +20,11 @@ jest.mock('../context/CarrotContext', () => ({ useCarrot: () => ({ say: jest.fn(
 jest.mock('@react-oauth/google', () => ({ GoogleLogin: () => null }));
 jest.mock('./Rustic/ImageCropper', () => () => null);
 jest.mock('./Rustic/IngredientManager', () => ({ ingredients, onChange }) => (
-    <textarea aria-label="Ingredients" value={ingredients} onChange={event => onChange(event.target.value)} />
+    <>
+        {/* Match the temporary quantity field's native constraints, separate from saved ingredients. */}
+        <input type="number" aria-label="Temporary ingredient quantity" defaultValue="" />
+        <textarea aria-label="Ingredients" value={ingredients} onChange={event => onChange(event.target.value)} />
+    </>
 ));
 jest.mock('./Rustic/OccasionWheel', () => ({ selected, onSelect }) => (
     <button type="button" onClick={() => onSelect('Dinner')} aria-pressed={selected === 'Dinner'}>Choose Dinner</button>
@@ -150,6 +154,21 @@ test('creating a meal updates the shared collection without losing existing meal
     expect(data.meals.map(meal => meal.name)).toEqual(['Existing soup', 'New stew']);
     expect(data.draftMeal.name).toBe('');
     expect(container.querySelector('input[name="name"]').value).toBe('');
+});
+
+test('the Save Recipe button retains the existing save action despite unfinished temporary ingredient input', async () => {
+    await mount();
+    await fillNewMeal();
+    await change('input[aria-label="Temporary ingredient quantity"]', '0.5');
+    expect(container.querySelector('input[aria-label="Temporary ingredient quantity"]').validity.stepMismatch).toBe(true);
+
+    const saveButton = container.querySelector('img[alt="Save Recipe"]').closest('button');
+    await act(async () => saveButton.click());
+
+    const saves = requests.filter(config => config.method === 'post' && config.url === '/meals');
+    expect(saves).toHaveLength(1);
+    expect(saves[0].data.get('ingredients')).toBe('potato');
+    expect(data.meals.map(meal => meal.name)).toEqual(['Existing soup', 'New stew']);
 });
 
 test('editing an existing meal never uploads an unrelated creation draft photo or crop', async () => {
