@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../utils/api";
+import "./GlobalMealList.css";
 
 function GlobalMealList({ meals: userMeals, onImport }) {
     const [globalMeals, setGlobalMeals] = useState([]);
@@ -38,20 +39,20 @@ function GlobalMealList({ meals: userMeals, onImport }) {
     if (loading) return <div className="text-center mt-4">Loading Library... 📚</div>;
 
     return (
-        <div className="container mt-4">
+        <div className="public-meal-library mt-4">
             <h2 className="text-center mb-4">Public Meal Library 📚</h2>
             <p className="text-center text-muted">Browse and add meals to your personal collection.</p>
 
-            <div className="row">
+            <div className="public-meal-grid">
                 {globalMeals.length === 0 ? (
-                    <div className="col-12 text-center">
+                    <div className="public-meal-empty text-center">
                         <p>No global meals found. Be the first to publish one!</p>
                         {/* Optional: Add a button to publish if the backend supports it, 
                             but for now just showing empty state message */}
                     </div>
                 ) : (
                     globalMeals.map((meal) => (
-                        <div key={meal._id} className="col-md-4 mb-3">
+                        <div key={meal._id} className="public-meal-item">
                             <div className="card shadow-sm h-100">
                                 <div className="card-body">
                                     <h5 className="card-title">{meal.name}</h5>
