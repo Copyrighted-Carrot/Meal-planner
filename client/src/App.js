@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from "react";
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
+import React, { useEffect, useContext } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AddMeal from "./components/AddMeal";
 import MealList from "./components/MealList";
 import GroceryList from "./components/GroceryList";
@@ -17,9 +17,7 @@ import { UserDataProvider, useUserData } from './context/UserDataContext';
 import { CarrotProvider, useCarrot } from "./context/CarrotContext";
 import "./App.css";
 
-import { CarrotIcon, PotIcon, BookIcon, CalendarIcon, ListIcon, LogoutIcon } from "./components/Icons";
-
-import rusticNavbarPlank from "./assets/rustic-navbar-plank.png";
+import ApplicationShell from './components/layout/ApplicationShell';
 
 // Connector Component to link App state with Carrot Context
 const GlobalCarrotConnector = ({ openSmartFridge }) => {
@@ -38,78 +36,6 @@ const GlobalCarrotConnector = ({ openSmartFridge }) => {
 };
 
 
-function Navbar() {
-  const { isAuthenticated, logout, user } = useContext(AuthContext);
-  const [showStats, setShowStats] = useState(false);
-  const location = useLocation();
-
-  if (!isAuthenticated) return null;
-  if (location.pathname === '/manager-access' || location.pathname === '/rustic-manager-dashboard') return null;
-
-  const toggleStats = () => setShowStats(!showStats);
-  const memberSince = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
-    : new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
-
-  return (
-    <>
-      <div style={{
-        position: "fixed",
-        top: 0,
-        right: 0,
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-start",
-        alignItems: "flex-end",
-        paddingRight: "10px",
-        zIndex: 10000,
-        pointerEvents: "none"
-      }}>
-        <div style={{
-          pointerEvents: "auto",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-start", // Start from top
-          gap: "20px", // Consistent spacing
-          height: "100%",
-          paddingTop: "40px", // Slight top padding
-          paddingBottom: "10px"
-        }}>
-          <div className="greeting-plank" onClick={toggleStats} title="Click to see your stats!">
-            {showStats ? `👨‍🍳 Chef Since ${memberSince}` : `👋 Hi, ${user && user.name}`}
-          </div>
-
-          <Link to="/" className={`sidebar-btn ${location.pathname === "/" ? "active" : ""}`}>
-            <CarrotIcon />
-            <span>Add Meal</span>
-          </Link>
-          <Link to="/available-meals" className={`sidebar-btn ${location.pathname === "/available-meals" ? "active" : ""}`}>
-            <PotIcon />
-            <span>Available Meals</span>
-          </Link>
-          <Link to="/browse" className={`sidebar-btn ${location.pathname === "/browse" ? "active" : ""}`}>
-            <BookIcon />
-            <span>Browse Recipes</span>
-          </Link>
-          <Link to="/meal-planner" className={`sidebar-btn ${location.pathname === "/meal-planner" ? "active" : ""}`}>
-            <CalendarIcon />
-            <span>Meal Planner</span>
-          </Link>
-          <Link to="/grocery-list" className={`sidebar-btn ${location.pathname === "/grocery-list" ? "active" : ""}`}>
-            <ListIcon />
-            <span>Grocery List</span>
-          </Link>
-          <button onClick={logout} className="sidebar-btn logout">
-            <LogoutIcon />
-            <span>Logout</span>
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
-
 function Application() {
   const { isAuthenticated } = useContext(AuthContext);
   const { meals, setMeals, draftMeal, setDraftMeal,
@@ -119,9 +45,7 @@ function Application() {
   return (
     <>
           <GlobalCarrotConnector openSmartFridge={() => setShowSmartModal(true)} />
-          <div className="App">
-            <Navbar />
-            <div className="container mt-4">
+          <ApplicationShell>
               {isAuthenticated && (
                 <>
                   <StarterPackModal
@@ -212,8 +136,7 @@ function Application() {
                   }
                 />
               </Routes>
-            </div>
-          </div>
+          </ApplicationShell>
     </>
   );
 }

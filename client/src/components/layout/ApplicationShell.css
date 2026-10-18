@@ -1,0 +1,67 @@
+.app-shell {
+  --page-gutter: clamp(.75rem, 2vw, 1.5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--page-gutter);
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--page-gutter);
+  align-items: start;
+}
+
+.app-shell .app-main {
+  width: 100%;
+  min-width: 0;
+  max-width: 90rem;
+  margin-inline: auto;
+  padding-bottom: 9rem;
+  overflow-wrap: anywhere;
+}
+
+.app-shell--public { padding: 0; gap: 0; }
+.app-shell--public .app-main { max-width: none; padding: 0; }
+.app-main > .container { width: 100%; max-width: 100%; padding-inline: 0; }
+.app-main :is(input, select, textarea, button) { max-width: 100%; }
+.app-main :is(img, video) { max-width: 100%; }
+
+.kitchen-navigation { min-width: 0; width: 100%; }
+.kitchen-navigation-heading { display: flex; align-items: stretch; gap: .75rem; min-width: 0; }
+.kitchen-navigation .greeting-plank { width: auto; flex: 1; min-width: 0; margin: 0; border: 0; overflow-wrap: anywhere; }
+.kitchen-navigation .sidebar-btn { width: 100%; min-width: 0; }
+.kitchen-navigation .sidebar-btn > span:first-child { flex-shrink: 0; }
+.kitchen-navigation .sidebar-btn > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.kitchen-navigation .kitchen-menu-toggle { width: auto; justify-content: center; }
+.kitchen-navigation-links { display: none; gap: .75rem; padding-top: .75rem; }
+.kitchen-navigation.is-open .kitchen-navigation-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+.kitchen-navigation :focus-visible, .app-main :focus-visible { outline: 3px solid #6b7d35; outline-offset: 4px; }
+
+.skip-to-content { position: fixed; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+.skip-to-content:focus { width: auto; height: auto; clip-path: none; top: .5rem; left: .5rem; z-index: 11000; padding: .75rem 1rem; background: #fff4d4; color: #4e342e; }
+
+/* Shared page proportions; existing page illustrations and controls remain intact. */
+.page-surface { min-width: 0; width: 100%; padding: clamp(1rem, 3vw, 2rem); background: #fff5df url('../../assets/theme/parchment_bg.png') center / cover; color: #4e342e; }
+.page-heading, .page-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; min-width: 0; }
+.page-heading { justify-content: space-between; }
+.page-heading > *, .page-actions > * { min-width: 0; max-width: 100%; }
+.page-actions .btn { white-space: normal; overflow-wrap: anywhere; }
+
+/* A 15rem signpost and a useful recipe workspace fit side by side here. */
+@media (min-width: 70rem) {
+  .app-shell:not(.app-shell--public) { grid-template-columns: minmax(0, 1fr) 15rem; }
+  .app-shell:not(.app-shell--public) .app-main { grid-column: 1; grid-row: 1; }
+  .kitchen-navigation { grid-column: 2; grid-row: 1; position: sticky; top: var(--page-gutter); max-height: calc(100dvh - 2 * var(--page-gutter)); overflow-y: auto; padding: .25rem; }
+  .kitchen-navigation-heading { display: block; }
+  .kitchen-navigation .greeting-plank { width: 100%; }
+  .kitchen-navigation .kitchen-menu-toggle { display: none; }
+  .kitchen-navigation-links, .kitchen-navigation.is-open .kitchen-navigation-links { display: grid; grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 30rem) {
+  .kitchen-navigation-heading { flex-wrap: wrap; }
+  .kitchen-navigation .greeting-plank { flex-basis: 100%; padding: .6rem; font-size: 1rem; }
+  .kitchen-navigation .kitchen-menu-toggle { width: 100%; padding: .65rem 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kitchen-navigation .sidebar-btn, .kitchen-navigation .greeting-plank { transition: none; }
+}
