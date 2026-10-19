@@ -29,85 +29,6 @@ const UNITS = [
     { val: 'can', label: 'Can' },
 ];
 
-// --- Custom Rustic Dropdown ---
-const CustomSelect = ({ value, onChange, options }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const containerRef = useRef(null);
-
-    // Click outside handler
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (containerRef.current && !containerRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const selectedLabel = options.find(o => o.val === value)?.label || value;
-
-    return (
-        <div ref={containerRef} style={{ position: 'relative', width: '90px' }}>
-            <div
-                onClick={() => setIsOpen(!isOpen)}
-                style={{
-                    width: '100%',
-                    background: '#fff',
-                    border: '1px solid #a1887f',
-                    borderRadius: '4px',
-                    padding: '5px',
-                    fontFamily: 'Nunito',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                }}
-            >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedLabel}</span>
-                <span style={{ fontSize: '0.7rem', color: '#5d4037' }}>▼</span>
-            </div>
-
-            {isOpen && (
-                <div style={{
-                    position: 'absolute',
-                    top: '100%', // FORCE DOWN
-                    left: 0,
-                    width: '100%',
-                    maxHeight: '150px',
-                    overflowY: 'auto',
-                    background: '#fff',
-                    border: '1px solid #a1887f',
-                    borderRadius: '4px',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                    zIndex: 9999, // Ensure it is on top of everything
-                }}>
-                    {options.map(opt => (
-                        <div
-                            key={opt.val}
-                            onClick={() => { onChange(opt.val); setIsOpen(false); }}
-                            style={{
-                                padding: '5px',
-                                cursor: 'pointer',
-                                fontSize: '0.9rem',
-                                color: '#3e2723',
-                                fontFamily: 'Nunito',
-                                backgroundColor: value === opt.val ? '#efebe9' : '#fff',
-                                borderBottom: '1px solid #f5f5f5'
-                            }}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = '#d7ccc8'}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = value === opt.val ? '#efebe9' : '#fff'}
-                        >
-                            {opt.label}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
-
 function IngredientManager({ ingredients, onChange }) {
     const { say } = useCarrot();
     // Mode State
@@ -124,6 +45,18 @@ function IngredientManager({ ingredients, onChange }) {
 
     const [editingIndex, setEditingIndex] = useState(null);
     const [chips, setChips] = useState([]);
+    const editQuantityRef = useRef(null);
+    const editButtonRefs = useRef([]);
+    const returnFocusIndex = useRef(null);
+
+    useEffect(() => {
+        if (editingIndex !== null) {
+            editQuantityRef.current?.focus();
+        } else if (returnFocusIndex.current !== null) {
+            editButtonRefs.current[returnFocusIndex.current]?.focus();
+            returnFocusIndex.current = null;
+        }
+    }, [editingIndex]);
 
     useEffect(() => {
         if (!ingredients) {
@@ -302,6 +235,7 @@ function IngredientManager({ ingredients, onChange }) {
                         {/* Qty */}
                         <input
                             type="number"
+                            aria-label="Ingredient quantity"
                             value={tempQty}
                             onChange={(e) => setTempQty(e.target.value)}
                             placeholder="1"
@@ -317,17 +251,21 @@ function IngredientManager({ ingredients, onChange }) {
                             }}
                         />
 
-                        {/* Dropdown (Standard Select for now, but ensured Z-Index above) */}
-                        <CustomSelect
+                        {/* Native unit selector retains the existing values and labels. */}
+                        <select
+                            className="ingredient-unit-select"
+                            aria-label="Ingredient unit"
                             value={tempUnit}
-                            onChange={(val) => setTempUnit(val)}
-                            options={UNITS}
-                        />
+                            onChange={(e) => setTempUnit(e.target.value)}
+                        >
+                            {UNITS.map(unit => <option key={unit.val} value={unit.val}>{unit.label}</option>)}
+                        </select>
 
                         {/* Name */}
                         <input
                             type="text"
                             className="ingredient-name-input"
+                            aria-label="Ingredient name"
                             value={tempName}
                             onChange={(e) => setTempName(e.target.value)}
                             onKeyDown={handleKeyDown}
@@ -392,6 +330,8 @@ function IngredientManager({ ingredients, onChange }) {
                                 <div className="ingredient-chip-edit" style={{ display: 'flex', gap: '5px', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
                                     <input
                                         type="text"
+                                        ref={editQuantityRef}
+                                        aria-label="Ingredient quantity"
                                         value={chip.qty}
                                         onChange={(e) => handleEditChange(index, 'qty', e.target.value)}
                                         placeholder="?"
@@ -399,6 +339,7 @@ function IngredientManager({ ingredients, onChange }) {
                                     />
                                     {/* ... existing edit mode ... */}
                                     <select
+                                        aria-label="Ingredient unit"
                                         value={chip.unit}
                                         onChange={(e) => handleEditChange(index, 'unit', e.target.value)}
                                         style={{ border: '1px solid #ccc', borderRadius: '3px', padding: '2px', fontSize: '0.8rem' }}
@@ -407,17 +348,22 @@ function IngredientManager({ ingredients, onChange }) {
                                     </select>
                                     <input
                                         type="text"
+                                        aria-label="Ingredient name"
                                         value={chip.name}
                                         onChange={(e) => handleEditChange(index, 'name', e.target.value)}
                                         style={{ width: '80px', border: '1px solid #ccc', borderRadius: '3px', padding: '2px', fontSize: '0.8rem' }}
                                     />
-                                    <button type="button" onClick={(e) => { e.stopPropagation(); setEditingIndex(null); }} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>✅</button>
+                                    <button type="button" aria-label="Done editing ingredient" onClick={(e) => { e.stopPropagation(); returnFocusIndex.current = index; setEditingIndex(null); }} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>✅</button>
                                 </div>
                             ) : (
-                                <div className="ingredient-chip-label" onClick={() => setEditingIndex(index)} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <button type="button" className="ingredient-chip-label"
+                                    ref={element => { editButtonRefs.current[index] = element; }}
+                                    aria-label={`Edit ingredient: ${formatIngredient(chip)}`}
+                                    onClick={() => setEditingIndex(index)}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                                     <span>{formatIngredient(chip)}</span>
                                     {isInvalid && <span style={{ fontSize: '0.8rem', color: '#d32f2f', marginLeft: '4px' }}>⚠️</span>}
-                                </div>
+                                </button>
                             )}
 
                             <button

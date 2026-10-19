@@ -81,11 +81,15 @@ function MealCard({ meal, onEdit, onDelete, selectionMode, isSelected, onToggle 
         >
             {/* Selection Checkbox */}
             {selectionMode && (
-                <div className="rustic-selection-overlay">
-                    <div className="rustic-checkbox">
-                        {isSelected && "✓"}
-                    </div>
-                </div>
+                <label className="rustic-selection-overlay" onClick={(event) => event.stopPropagation()}>
+                    <input
+                        className="rustic-checkbox"
+                        type="checkbox"
+                        aria-label={`Select ${meal.name}`}
+                        checked={Boolean(isSelected)}
+                        onChange={() => onToggle && onToggle(meal._id)}
+                    />
+                </label>
             )}
 
             {/* Frame Background */}
