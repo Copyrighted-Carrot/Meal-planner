@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useRef } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useCarrot } from "../../context/CarrotContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -18,39 +18,78 @@ const Login = () => {
 
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
+    const [invalidFields, setInvalidFields] = useState([]);
+    const [busy, setBusy] = useState(false);
+    const submitting = useRef(false);
 
     const { email, password } = formData;
 
-    const onChange = (e) =>
+    const onChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+        if (invalidFields.includes(e.target.name)) {
+            setError("");
+            setInvalidFields([]);
+        }
+    };
+
+    const showError = (message, fields = []) => {
+        setError(message);
+        setInvalidFields(fields);
+        say(`🥕 Oops! ${message}`);
+    };
+
+    const onInvalid = (event) => {
+        const field = [...event.currentTarget.querySelectorAll("input")].find(input => !input.validity.valid);
+        if (!submitting.current && field === event.target) {
+            showError(field.validationMessage, [field.name]);
+        }
+    };
+
+    const beginSubmission = () => {
+        if (submitting.current) return false;
+        submitting.current = true;
+        setBusy(true);
+        setError("");
+        setInvalidFields([]);
+        return true;
+    };
+
+    const finishSubmission = () => {
+        submitting.current = false;
+        setBusy(false);
+    };
 
     const onSubmit = async (e) => {
         e.preventDefault();
+        if (!beginSubmission()) return;
         try {
             await login({ email, password });
             say("🥕 Welcome back! Let's cook something amazing!");
             navigate("/"); // Redirect to home/add meal
         } catch (err) {
-            const msg = err.message || "Login failed";
-
-            // Restore UI Plank ONLY for Invalid Credentials
-            if (msg === "Invalid Credentials") {
-                setError("Invalid Credentials");
-            } else {
-                setError(""); // Clear any previous error
-                say(`🥕 Oops! ${msg}`); // Carrot announces other errors
-            }
+            if (err.code === 'SESSION_CHANGED' || err.code === 'REQUEST_CANCELLED') return;
+            showError(err.message || "Login failed. Please try again.");
+        } finally {
+            finishSubmission();
         }
     };
 
     const handleGoogleSuccess = async (credentialResponse) => {
+        if (!beginSubmission()) return;
         try {
             await googleLogin(credentialResponse.credential);
             say("🥕 Google Login successful! Welcome!");
             navigate("/");
         } catch (err) {
-            say("🥕 Google Sign-In failed. Please try again.");
+            if (err.code === 'SESSION_CHANGED' || err.code === 'REQUEST_CANCELLED') return;
+            showError("Google Sign-In failed. Please try again.");
+        } finally {
+            finishSubmission();
         }
+    };
+
+    const handleGoogleError = () => {
+        if (!submitting.current) showError("Google Sign-In failed. Please try again.");
     };
 
     return (
@@ -66,11 +105,12 @@ const Login = () => {
 
 
 
-                    {error === "Invalid Credentials" && (
-                        <div className="invalid-creds-plank" role="alert" aria-label="Invalid Credentials" title="Invalid Credentials"></div>
+                    {error && (
+                        <div id="login-error" className="rustic-alert" role="alert">{error}</div>
                     )}
+                    {busy && <p id="login-status" role="status">Signing in...</p>}
 
-                    <form onSubmit={onSubmit}>
+                    <form onSubmit={onSubmit} onInvalid={onInvalid} aria-busy={busy} aria-describedby={error ? "login-error" : busy ? "login-status" : undefined}>
                         <div className="rustic-input-group">
                             <div className="rustic-field-wrapper">
                                 <span className="rustic-icon left"></span> {/* Carrot Image */}
@@ -81,6 +121,9 @@ const Login = () => {
                                     onChange={onChange}
                                     className="rustic-input"
                                     placeholder="Email Address"
+                                    aria-label="Email Address"
+                                    aria-invalid={invalidFields.includes("email") || undefined}
+                                    aria-describedby={invalidFields.includes("email") ? "login-error" : undefined}
                                     required
                                 />
                                 <span className="rustic-icon right">✉️</span>
@@ -96,6 +139,9 @@ const Login = () => {
                                     onChange={onChange}
                                     className="rustic-input"
                                     placeholder="Password"
+                                    aria-label="Password"
+                                    aria-invalid={invalidFields.includes("password") || undefined}
+                                    aria-describedby={invalidFields.includes("password") ? "login-error" : undefined}
                                     required
                                 />
                                 <div className="rustic-icon right">
@@ -109,8 +155,8 @@ const Login = () => {
                                 </div>
                             </div>
                         </div>
-                        <button type="submit" className="rustic-btn carrot-btn">
-                            Login 🥕
+                        <button type="submit" className="rustic-btn carrot-btn" disabled={busy}>
+                            {busy ? "Signing in..." : "Login 🥕"}
                         </button>
                     </form>
 
@@ -119,7 +165,7 @@ const Login = () => {
                         <div className="google-auth-control">
                             <GoogleLogin
                                 onSuccess={handleGoogleSuccess}
-                                onError={() => say("🥕 Google Sign-In Failed")}
+                                onError={handleGoogleError}
                                 width="240"
                             />
                         </div>

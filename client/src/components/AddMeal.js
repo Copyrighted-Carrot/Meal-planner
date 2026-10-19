@@ -38,6 +38,10 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
   const [previewUrl, setPreviewUrl] = useState(draftMeal?.previewUrl || null);
   const [editId, setEditId] = useState(null); // ID of meal being edited
   const [editLoading, setEditLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [formNotice, setFormNotice] = useState("");
+  const saveInFlight = React.useRef(false);
   const redirectTimer = React.useRef(null);
   const { assertSession, refreshMeals } = useUserData();
   const [imageRejected, setImageRejected] = useState(false); // Track if overly large image was rejected
@@ -61,6 +65,8 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
     let active = true;
     const controller = new AbortController();
     setEditLoading(true);
+    setFormError("");
+    setFormNotice("");
     api.get(`/meals/${mealId}`, { signal: controller.signal }).then(({ data }) => {
       if (!active) return;
       assertSession();
@@ -144,14 +150,17 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
   // Handle Input Changes
   const validateMealData = () => {
     if (!meal.name.trim()) {
+      setFormError("Please enter a meal name.");
       say("🥕 Every dish needs a name! What do you call this masterpiece?", "carrot");
       return false;
     }
     if (!meal.ingredients.trim()) {
+      setFormError("Please add at least one ingredient.");
       say("🥕 What's in it? Don't keep the ingredients a secret!", "carrot");
       return false;
     }
     if (!meal.category) {
+      setFormError("Please choose a meal occasion.");
       say("🥕 When do we eat this? Spin the wheel to choose a Breakfast, Lunch, or Dinner!", "carrot");
       return false;
     }
@@ -167,7 +176,9 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
   // Handle Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editLoading) return;
+    if (editLoading || saveInFlight.current) return;
+    setFormError("");
+    setFormNotice("");
     if (!validateMealData()) return;
 
     // Use FormData for file upload
@@ -198,6 +209,8 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
       formData.append("image", image);
     }
 
+    saveInFlight.current = true;
+    setSaving(true);
     try {
       assertSession();
       const started = captureSession();
@@ -231,9 +244,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
         navigate(location.pathname, { replace: true, state: null });
 
         // Show success message
-        // Show success message
-        // Show success message
-        // Show success message
+        setFormNotice(editId ? "Meal updated successfully!" : "Meal added successfully!");
         if (imageRejected) {
           say("🥕 Meal added! (But the image was too big to upload 📸❌)", "carrot");
         } else {
@@ -248,10 +259,11 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
       }
     } catch (error) {
       if (error.code === 'SESSION_CHANGED' || error.code === 'REQUEST_CANCELLED' || error.statusCode === 401) return;
-      console.error("Error adding meal:", error);
-
-      // Visual feedback for error (Carrot handles it all)
+      setFormError(error.message || "Could not save this meal. Please try again.");
       say(`🥕 Oops! ${error.message || "Something went wrong."}`, "carrot");
+    } finally {
+      saveInFlight.current = false;
+      setSaving(false);
     }
   };
 
@@ -279,7 +291,11 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
           }
         >
 
-          <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <form onSubmit={handleSubmit} aria-busy={saving || editLoading}
+            aria-describedby={formError ? 'meal-form-error' : undefined}
+            style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+
+            {editLoading && <p role="status" className="alert alert-info">Loading meal for editing...</p>}
 
             <InputPlank
               label="Name Your Dish"
@@ -337,10 +353,15 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
 
             {/* Action */}
             {/* Action */}
+            {formError && <div id="meal-form-error" role="alert" className="alert alert-danger">{formError}</div>}
+            {saving && <p role="status" className="alert alert-info">Saving meal...</p>}
+            {formNotice && <p role="status" className="alert alert-success">{formNotice}</p>}
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
               <button
                 type="button"
                 className="recipe-save-button"
+                disabled={saving || editLoading}
+                aria-label={saving ? 'Saving meal...' : editLoading ? 'Loading meal...' : editId ? 'Update Recipe' : 'Save Recipe'}
                 onClick={(event) => { event.preventDefault(); handleSubmit(event); }}
                 onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
                 onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}

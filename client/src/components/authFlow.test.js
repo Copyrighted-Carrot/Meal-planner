@@ -218,7 +218,7 @@ test('the actual login form retains its invalid-credentials feedback after a rej
     await change('input[name="password"]', ['fixture', 'only'].join('-'));
     await submit();
     expect(location.pathname).toBe('/login');
-    expect(container.querySelector('[title="Invalid Credentials"]')).not.toBeNull();
+    expect(container.querySelector('[role="alert"]').textContent).toContain('Invalid Credentials');
     expect(auth.isAuthenticated).toBe(false);
     expect(requests).toHaveLength(1);
     expect(requests[0].headers.get('x-auth-token')).toBeUndefined();
