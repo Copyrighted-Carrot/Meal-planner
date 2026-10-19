@@ -5,21 +5,34 @@ import "./GlobalMealList.css";
 function GlobalMealList({ meals: userMeals, onImport }) {
     const [globalMeals, setGlobalMeals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState("");
+    const [loadSucceeded, setLoadSucceeded] = useState(false);
+    const [loadAttempt, setLoadAttempt] = useState(0);
     const [addingId, setAddingId] = useState(null);
 
     useEffect(() => {
+        let active = true;
         async function fetchGlobalMeals() {
+            setLoading(true);
+            setLoadError("");
+            setLoadSucceeded(false);
             try {
                 const res = await api.get("/meals/global");
-                setGlobalMeals(res.data);
+                if (active) {
+                    setGlobalMeals(res.data);
+                    setLoadSucceeded(true);
+                }
             } catch (err) {
-                console.error("Error fetching global meals:", err);
+                if (active && err.code !== 'SESSION_CHANGED' && err.statusCode !== 401) {
+                    setLoadError("Could not load the recipe library. Please try again.");
+                }
             } finally {
-                setLoading(false);
+                if (active) setLoading(false);
             }
         }
         fetchGlobalMeals();
-    }, []);
+        return () => { active = false; };
+    }, [loadAttempt]);
 
     const handleAddToMyMeals = async (mealId) => {
         setAddingId(mealId);
@@ -36,19 +49,20 @@ function GlobalMealList({ meals: userMeals, onImport }) {
         }
     };
 
-    if (loading) return <div className="text-center mt-4">Loading Library... 📚</div>;
-
     return (
         <div className="public-meal-library mt-4">
             <h2 className="text-center mb-4">Public Meal Library 📚</h2>
             <p className="text-center text-muted">Browse and add meals to your personal collection.</p>
 
-            <div className="public-meal-grid">
+            {loading ? <p role="status" className="text-center">Loading Library... 📚</p> : loadError ? (
+                <div role="alert" className="alert alert-danger">
+                    <p>{loadError}</p>
+                    <button className="btn btn-secondary" onClick={() => setLoadAttempt(attempt => attempt + 1)}>Retry</button>
+                </div>
+            ) : loadSucceeded ? <div className="public-meal-grid">
                 {globalMeals.length === 0 ? (
                     <div className="public-meal-empty text-center">
-                        <p>No global meals found. Be the first to publish one!</p>
-                        {/* Optional: Add a button to publish if the backend supports it, 
-                            but for now just showing empty state message */}
+                        <p>No global meals found. Please check back later.</p>
                     </div>
                 ) : (
                     globalMeals.map((meal) => (
@@ -74,7 +88,7 @@ function GlobalMealList({ meals: userMeals, onImport }) {
                         </div>
                     ))
                 )}
-            </div>
+            </div> : null}
         </div>
     );
 }

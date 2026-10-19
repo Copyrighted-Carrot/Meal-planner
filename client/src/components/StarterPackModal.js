@@ -1,26 +1,38 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import api from '../utils/api';
 import useDialogFocus from '../hooks/useDialogFocus';
 import './UserDialogs.css';
 
 function StarterPackModal({ isOpen, onClose, onImport, onSwitch }) {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const importing = useRef(false);
+    const imported = useRef(false);
     const dialogRef = useDialogFocus(isOpen, loading ? undefined : onClose);
 
     if (!isOpen) return null;
 
     const handleImport = async () => {
+        if (importing.current) return;
+        importing.current = true;
         setLoading(true);
+        setError("");
         try {
-            await api.post("/meals/import-starter-pack");
+            if (!imported.current) {
+                await api.post("/meals/import-starter-pack");
+                imported.current = true;
+            }
             await onImport(); // Refresh the current user's shared meals before closing.
+            imported.current = false;
             onClose();
             alert("Starter pack imported! 🎉");
         } catch (err) {
             if (err.code === 'SESSION_CHANGED' || err.statusCode === 401) return;
-            console.error("Error importing starter pack:", err);
-            alert("Failed to import starter pack.");
+            setError(imported.current
+                ? "Starter pack imported, but your collection could not be refreshed. Retry to reload your meals."
+                : "Could not import the starter pack. Please try again.");
         } finally {
+            importing.current = false;
             setLoading(false);
         }
     };
@@ -33,6 +45,11 @@ function StarterPackModal({ isOpen, onClose, onImport, onSwitch }) {
                         <h5 className="modal-title" id="starter-pack-title">Welcome to Meal Planner! 🥕</h5>
                     </div>
                     <div className="modal-body text-center">
+                        {loading && <p role="status">Importing your starter pack and refreshing your meals...</p>}
+                        {error && <div role="alert" className="alert alert-danger">
+                            <p>{error}</p>
+                            <button className="btn btn-secondary" onClick={handleImport} disabled={loading}>Retry</button>
+                        </div>}
                         <p className="lead">Your meal list is looking a little empty.</p>
                         <p>Would you like to start with a <strong>Starter Pack</strong> of 20 delicious meals?</p>
                         <div className="alert alert-info">
@@ -40,7 +57,7 @@ function StarterPackModal({ isOpen, onClose, onImport, onSwitch }) {
                         </div>
                         <hr />
                         <p>Or try our <strong>Smart Fridge Match</strong>?</p>
-                        <button className="btn btn-outline-info w-100 mb-2" onClick={onSwitch}>
+                        <button className="btn btn-outline-info w-100 mb-2" onClick={onSwitch} disabled={loading}>
                             🧊 I have ingredients, suggest meals!
                         </button>
                     </div>
