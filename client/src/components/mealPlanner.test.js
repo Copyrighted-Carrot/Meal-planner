@@ -17,6 +17,23 @@ const reply = (config, data) => ({ config, status: 200, data });
 const fail = (config, status, message) => Promise.reject({ config, response: { status, data: { message } } });
 const button = text => [...container.querySelectorAll('button')].find(item => item.textContent.includes(text));
 const click = async element => act(async () => element.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+const saves = () => requests.filter(config => config.url === '/plan' && config.method === 'post');
+const dialog = () => container.querySelector('[role="dialog"]');
+const chooseWeek = async value => act(async () => {
+    const input = container.querySelector('#plan-week');
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+});
+const openReplacement = async () => {
+    const trigger = button('Generate New Plan');
+    trigger.focus();
+    await click(trigger);
+    return trigger;
+};
+const key = async (name, shiftKey = false) => act(async () => {
+    document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: name, shiftKey, bubbles: true, cancelable: true }));
+});
+const loadSaved = config => Promise.resolve(reply(config, { weekStart: config.params.weekStart, revision: 2, plan: savedPlan }));
 const mount = async () => act(async () => root.render(
     <AuthContext.Provider value={{ isAuthenticated: true, sessionId: 'planner-component-fixture' }}>
         <UserDataProvider><MealPlanner meals={meals} /></UserDataProvider>
@@ -56,6 +73,8 @@ test('loading and saving disable generation, then successful save visibly displa
         weekStart: JSON.parse(config.data).weekStart, revision: 1, plan: savedPlan
     })); });
     await click(button('Generate New Plan'));
+    expect(dialog()).toBeNull();
+    expect(saves()).toHaveLength(1);
     expect(container.querySelector('[role="status"]').textContent).toMatch(/Saving this week/);
     expect(button('Generate New Plan').disabled).toBe(true);
     await act(async () => finishSave());
@@ -72,11 +91,140 @@ test('failed saves show an alert and preserve the previously loaded plan', async
     await mount();
     respond = config => fail(config, 503, 'Service unavailable');
     await click(button('Generate New Plan'));
+    expect(saves()).toHaveLength(0);
+    await click(button('Confirm replacement'));
     expect(container.querySelector('[role="alert"]').textContent).toBe('Plan was not saved. Service unavailable');
     expect(container.textContent).toContain('Saved snack');
     expect(container.textContent).not.toContain('Plan saved.');
     expect(button('Reload this week')).toBeDefined();
     expect(button('Generate New Plan').disabled).toBe(false);
+});
+
+test('saved-week generation explains replacement with the selected week and waits without modifying it', async () => {
+    respond = loadSaved;
+    await mount();
+    await chooseWeek('2026-10-12');
+    const before = container.querySelector('tbody').innerHTML;
+    const requestCount = requests.length;
+    await openReplacement();
+    const modal = dialog();
+    expect(modal.getAttribute('aria-modal')).toBe('true');
+    expect(document.getElementById(modal.getAttribute('aria-labelledby')).textContent).toBe('Replace saved meal plan?');
+    expect(document.getElementById(modal.getAttribute('aria-describedby')).textContent).toContain('replace the saved plan for the week beginning Monday, 2026-10-12');
+    expect(document.activeElement).toBe(button('Cancel'));
+    expect(saves()).toHaveLength(0);
+    expect(requests).toHaveLength(requestCount);
+    expect(container.querySelector('#plan-week').value).toBe('2026-10-12');
+    expect(container.querySelector('tbody').innerHTML).toBe(before);
+});
+
+test('Cancel restores the Generate trigger without requests or changing the selected week or plan', async () => {
+    respond = loadSaved;
+    await mount();
+    await chooseWeek('2026-10-12');
+    const before = container.querySelector('tbody').innerHTML;
+    const requestCount = requests.length;
+    const trigger = await openReplacement();
+    await click(button('Cancel'));
+    expect(dialog()).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    expect(requests).toHaveLength(requestCount);
+    expect(saves()).toHaveLength(0);
+    expect(container.querySelector('#plan-week').value).toBe('2026-10-12');
+    expect(container.querySelector('tbody').innerHTML).toBe(before);
+});
+
+test('confirmation traps Tab in both directions and Escape cancels without saving', async () => {
+    respond = loadSaved;
+    await mount();
+    const trigger = await openReplacement();
+    const cancel = button('Cancel'), confirm = button('Confirm replacement');
+    expect(document.activeElement).toBe(cancel);
+    await key('Tab', true);
+    expect(document.activeElement).toBe(confirm);
+    await key('Tab');
+    expect(document.activeElement).toBe(cancel);
+    await key('Escape');
+    expect(dialog()).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    expect(saves()).toHaveLength(0);
+    expect(container.textContent).toContain('Saved snack');
+});
+
+test('Confirm saves once through the existing flow with the selected week and unchanged four-slot payload', async () => {
+    respond = loadSaved;
+    await mount();
+    await chooseWeek('2026-10-12');
+    let finishSave;
+    respond = config => new Promise(resolve => { finishSave = () => resolve(reply(config, {
+        weekStart: JSON.parse(config.data).weekStart, revision: 3, plan: savedPlan
+    })); });
+    const trigger = await openReplacement();
+    const confirm = button('Confirm replacement');
+    // Two activations in one task must still generate/save only once.
+    await act(async () => { confirm.click(); confirm.click(); });
+    expect(saves()).toHaveLength(1);
+    expect(JSON.parse(saves()[0].data)).toEqual({ weekStart: '2026-10-12', revision: 2,
+        plan: PLAN_DAYS.map(day => ({ day, breakfast: 'fixture-breakfast', lunch: 'fixture-lunch', dinner: 'fixture-dinner', snack: 'fixture-snack' })) });
+    expect(dialog().textContent).toContain('Replacing the saved plan...');
+    expect(button('Cancel').disabled).toBe(true);
+    expect(button('Replacing...').disabled).toBe(true);
+    await key('Escape');
+    expect(dialog()).not.toBeNull();
+    expect(saves()).toHaveLength(1);
+    await act(async () => finishSave());
+    expect(dialog()).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.disabled).toBe(false);
+    expect(container.querySelector('#plan-week').value).toBe('2026-10-12');
+    expect(container.textContent).toContain('Plan saved.');
+    expect(container.textContent).toContain('Saved snack');
+});
+
+test('a failed confirmed replacement keeps the saved plan, displays the existing error and restores focus', async () => {
+    respond = loadSaved;
+    await mount();
+    const before = container.querySelector('tbody').innerHTML;
+    const trigger = await openReplacement();
+    respond = config => fail(config, 503, 'Service unavailable');
+    await click(button('Confirm replacement'));
+    expect(dialog()).toBeNull();
+    expect(saves()).toHaveLength(1);
+    expect(document.activeElement).toBe(trigger);
+    expect(container.querySelector('tbody').innerHTML).toBe(before);
+    expect(container.querySelector('[role="alert"]').textContent).toBe('Plan was not saved. Service unavailable');
+});
+
+test('a confirmed save conflict returns focus to the existing Reload action when Generate is unavailable', async () => {
+    respond = loadSaved;
+    await mount();
+    const before = container.querySelector('tbody').innerHTML;
+    await openReplacement();
+    respond = config => fail(config, 409, 'Plan changed');
+    await click(button('Confirm replacement'));
+    expect(dialog()).toBeNull();
+    expect(saves()).toHaveLength(1);
+    expect(button('Generate New Plan').disabled).toBe(true);
+    expect(document.activeElement).toBe(button('Reload this week'));
+    expect(container.querySelector('tbody').innerHTML).toBe(before);
+    expect(container.querySelector('[role="alert"]').textContent).toMatch(/Reload it before saving again/);
+});
+
+test('changing weeks dismisses stale confirmation without saving and the new empty week still generates directly', async () => {
+    respond = loadSaved;
+    await mount();
+    await chooseWeek('2026-10-12');
+    await openReplacement();
+    respond = config => Promise.resolve(reply(config, { weekStart: config.params.weekStart, revision: 0, plan: [] }));
+    await chooseWeek('2026-10-19');
+    expect(dialog()).toBeNull();
+    expect(saves()).toHaveLength(0);
+    expect(container.querySelector('#plan-week').value).toBe('2026-10-19');
+    respond = config => Promise.resolve(reply(config, { weekStart: JSON.parse(config.data).weekStart, revision: 1, plan: savedPlan }));
+    await click(button('Generate New Plan'));
+    expect(dialog()).toBeNull();
+    expect(saves()).toHaveLength(1);
+    expect(JSON.parse(saves()[0].data).weekStart).toBe('2026-10-19');
 });
 
 test('a conflicting save requires visible reload before generation can resume', async () => {

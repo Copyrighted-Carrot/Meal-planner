@@ -1,9 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useUserData } from "../context/UserDataContext";
 import { PLAN_DAYS } from "../utils/planDate";
+import useDialogFocus from "../hooks/useDialogFocus";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "./PlanningPages.css";
+import "./UserDialogs.css";
 
 const planColumns = [
   ["breakfast", "Breakfast"],
@@ -15,8 +17,25 @@ const planColumns = [
 function MealPlanner({ meals }) {
   const { weeklyPlan, weekStart, selectWeek, planRecord, loadPlan, savePlan, mealsLoading, mealsError } = useUserData();
   const busy = planRecord.loading || planRecord.saving;
+  const [replacementWeek, setReplacementWeek] = useState(null);
+  const confirmingReplacement = useRef(false);
+  const restoreReplacementFocus = useRef(false);
+  const reloadButtonRef = useRef(null);
+  const showReplacement = replacementWeek !== null && replacementWeek === weekStart;
+  const cancelReplacement = () => {
+    if (!confirmingReplacement.current) setReplacementWeek(null);
+  };
+  const replacementDialogRef = useDialogFocus(showReplacement, cancelReplacement);
 
   useEffect(() => { loadPlan(); }, [weekStart, loadPlan]);
+  useEffect(() => { setReplacementWeek(null); }, [weekStart]);
+  useEffect(() => {
+    if (!showReplacement && restoreReplacementFocus.current) {
+      restoreReplacementFocus.current = false;
+      // A conflict disables Generate; keep the existing Reload action reachable.
+      if (!planRecord.loaded) reloadButtonRef.current?.focus();
+    }
+  }, [showReplacement, planRecord.loaded]);
 
   const generateMealPlan = async () => {
     if (!meals.length || busy || !planRecord.loaded) return;
@@ -31,6 +50,24 @@ function MealPlanner({ meals }) {
     try {
       await savePlan(newPlan);
     } catch (_) { /* Shared state displays the save error. */ }
+  };
+
+  const requestGeneration = () => {
+    if (!meals.length || busy || !planRecord.loaded || mealsLoading) return;
+    if (weeklyPlan.length > 0) setReplacementWeek(weekStart);
+    else generateMealPlan();
+  };
+
+  const confirmReplacement = async () => {
+    if (!showReplacement || confirmingReplacement.current || busy || !planRecord.loaded || mealsLoading || !meals.length) return;
+    confirmingReplacement.current = true;
+    try {
+      await generateMealPlan();
+    } finally {
+      confirmingReplacement.current = false;
+      restoreReplacementFocus.current = true;
+      setReplacementWeek(null);
+    }
   };
 
   const getRandomMeal = (category) => {
@@ -117,7 +154,7 @@ function MealPlanner({ meals }) {
       {planRecord.saving && <p role="status">Saving this week's plan...</p>}
       {planRecord.notice && <p role="status" className="text-success">{planRecord.notice}</p>}
       {(planRecord.error || mealsError) && <div role="alert" className="alert alert-danger">{planRecord.error || mealsError}</div>}
-      {planRecord.error && <button className="btn btn-secondary mb-2" disabled={busy} onClick={() => loadPlan(true)}>Reload this week</button>}
+      {planRecord.error && <button ref={reloadButtonRef} className="btn btn-secondary mb-2" disabled={busy} onClick={() => loadPlan(true)}>Reload this week</button>}
       {planRecord.legacyPlan?.length > 0 && <div className="alert alert-info">
         An older undated plan is available. It has not been assigned to this week.
         <button className="btn btn-secondary ms-2" disabled={busy || !planRecord.loaded}
@@ -164,10 +201,34 @@ function MealPlanner({ meals }) {
           </div>
         </>
       )}
-      <button className="btn btn-success btn-lg mt-3 mb-5" onClick={generateMealPlan}
+      <button className="btn btn-success btn-lg mt-3 mb-5" onClick={requestGeneration}
         disabled={busy || !planRecord.loaded || mealsLoading || !meals.length}>
         🔄 Generate New Plan
       </button>
+      {showReplacement && (
+        <div ref={replacementDialogRef} className="modal show d-block user-dialog" role="dialog" aria-modal="true"
+          aria-labelledby="replace-plan-title" aria-describedby="replace-plan-description" tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h2 className="modal-title h5" id="replace-plan-title">Replace saved meal plan?</h2>
+              </div>
+              <div className="modal-body">
+                <p id="replace-plan-description">Generating a new plan will replace the saved plan for the week beginning Monday, <strong className="text-nowrap">{replacementWeek}</strong>.</p>
+                {planRecord.saving && <p role="status">Replacing the saved plan...</p>}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={cancelReplacement} disabled={planRecord.saving}>Cancel</button>
+                <button type="button" className="btn btn-success" onClick={confirmReplacement}
+                  disabled={busy || !planRecord.loaded || mealsLoading || !meals.length}>
+                  {planRecord.saving ? "Replacing..." : "Confirm replacement"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
