@@ -3,6 +3,8 @@ import plankBg from '../../assets/rustic-plank-ui.png';
 
 const InputPlank = ({
     label,
+    id,
+    describedBy,
     value,
     onChange,
     name,
@@ -77,6 +79,7 @@ const InputPlank = ({
             role={onClick ? 'button' : undefined}
             tabIndex={onClick ? 0 : undefined}
             aria-label={onClick ? label : undefined}
+            aria-describedby={onClick ? describedBy : undefined}
             onKeyDown={onClick ? (event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
@@ -119,9 +122,11 @@ const InputPlank = ({
             {/* Direct Input (No Label Wrapper) */}
             {isTextarea ? (
                 <textarea
+                    id={id}
                     className="rustic-scroll"
                     name={name}
                     aria-label={label}
+                    aria-describedby={describedBy}
                     value={value}
                     onChange={onChange}
                     placeholder={placeholder || label}
@@ -139,9 +144,11 @@ const InputPlank = ({
                 />
             ) : (
                 <input
+                    id={id}
                     type={type}
                     name={name}
                     aria-label={label}
+                    aria-describedby={describedBy}
                     tabIndex={onClick ? -1 : undefined}
                     value={value}
                     onChange={onChange}

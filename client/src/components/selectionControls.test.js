@@ -87,7 +87,7 @@ test.each(units)('selecting unit %s preserves the ingredient payload and resets 
     await change(entry().querySelector('.ingredient-name-input'), 'rice');
     expect(entryUnit().value).toBe(unit);
     expect(onIngredientsChange).not.toHaveBeenCalled();
-    await click([...entry().querySelectorAll('button')].find(button => button.textContent === '+'));
+    await click(entry().querySelector('button[aria-label="Add ingredient"]'));
     expect(onIngredientsChange.mock.calls).toEqual([[unit === 'x' ? '2  rice' : `2 ${unit} rice`]]);
     expect(entryUnit().value).toBe('x');
     expect(entry().querySelector('input[type="number"]').value).toBe('');

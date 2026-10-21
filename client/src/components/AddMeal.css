@@ -47,6 +47,39 @@
     justify-content: center;
 }
 
+.recipe-form-fields,
+.recipe-parchment-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    min-width: 0;
+}
+
+.recipe-parchment-footer { margin-top: 1.5rem; }
+
+.recipe-field-label,
+.recipe-occasion legend {
+    float: none;
+    width: auto;
+    margin: 0 0 var(--rustic-space-small);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.recipe-field-help {
+    margin: 0 0 var(--rustic-space-small);
+    font-size: .9rem;
+}
+
+.recipe-occasion {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    text-align: center;
+}
+
 .rustic-plank {
     padding: 1rem clamp(.75rem, 3vw, 2rem);
 }
@@ -83,6 +116,18 @@
 .ingredient-entry {
     flex-wrap: wrap;
 }
+
+.ingredient-entry-field {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    min-width: 0;
+    max-width: 100%;
+}
+.ingredient-entry-field > span { font-size: .85rem; font-weight: 700; }
+.ingredient-quantity-field { width: 4.5rem; }
+.ingredient-name-field { flex: 1 1 12rem; }
+.ingredient-entry :is(input, select, .ingredient-add-button) { min-height: 2.75rem; }
 
 .ingredient-unit-select {
     width: 90px;

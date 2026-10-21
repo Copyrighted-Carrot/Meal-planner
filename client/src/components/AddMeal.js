@@ -42,6 +42,7 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
   const [formError, setFormError] = useState("");
   const [formNotice, setFormNotice] = useState("");
   const saveInFlight = React.useRef(false);
+  const occasionRef = React.useRef(null);
   const redirectTimer = React.useRef(null);
   const { assertSession, refreshMeals } = useUserData();
   const [imageRejected, setImageRejected] = useState(false); // Track if overly large image was rejected
@@ -161,7 +162,8 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
     }
     if (!meal.category) {
       setFormError("Please choose a meal occasion.");
-      say("🥕 When do we eat this? Spin the wheel to choose a Breakfast, Lunch, or Dinner!", "carrot");
+      occasionRef.current?.querySelector('[role="button"], button')?.focus();
+      say("🥕 When do we eat this? Choose Breakfast, Lunch, Dinner, or Snack on the occasion wheel!", "carrot");
       return false;
     }
     return true;
@@ -278,101 +280,112 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
 
       {/* MAIN LAYOUT: Single Wide Scroll with integrated Wheel */}
       <div className="add-meal-notebook">
-        <ParchmentContainer
-          title="Craft Your Feast"
-          sidePanel={
-            <OccasionWheel
-              selected={meal.category}
-              onSelect={(cat) => {
-                setMeal({ ...meal, category: cat });
-                if (setDraftMeal) setDraftMeal(prev => ({ ...prev, category: cat }));
-              }}
-            />
-          }
-        >
-
-          <form onSubmit={handleSubmit} aria-busy={saving || editLoading}
-            aria-describedby={formError ? 'meal-form-error' : undefined}
-            style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-
-            {editLoading && <p role="status" className="alert alert-info">Loading meal for editing...</p>}
-
-            <InputPlank
-              label="Name Your Dish"
-              name="name"
-              value={meal.name}
-              onChange={handleChange}
-              placeholder="Name Your Dish"
-              icon={PenIcon}
-            />
-
-            {/* Ingredients Manager (Replaces Text Area) */}
-            <IngredientManager
-              ingredients={meal.ingredients}
-              onChange={(val) => {
-                setMeal({ ...meal, ingredients: val });
-                if (setDraftMeal) setDraftMeal(prev => ({ ...prev, ingredients: val }));
-              }}
-            />
-
-            {/* Photo Section Wrapper */}
-            <div style={{ position: 'relative', width: '100%' }}>
-              <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-              <InputPlank
-                label="Upload Photo"
-                value={image ? image.name : ""}
-                readOnly={true}
-                onClick={() => fileInputRef.current.click()}
-                icon={PhotoIcon}
-                placeholder={image ? "Photo Selected" : "Upload Photo"}
-              />
-
-              {/* The photo remains in document flow as the form grows. */}
-              {previewUrl && (
+        <form onSubmit={handleSubmit} aria-busy={saving || editLoading}
+          aria-describedby={formError ? 'meal-form-error' : undefined}>
+          <ParchmentContainer
+            title="Craft Your Feast"
+            sidePanel={
+              <fieldset id="meal-occasion" className="recipe-occasion" ref={occasionRef} aria-describedby="meal-occasion-help">
+                <legend>Meal occasion (required)</legend>
+                <p id="meal-occasion-help" className="recipe-field-help">Choose Breakfast, Lunch, Dinner, or Snack before saving.</p>
+                <OccasionWheel
+                  selected={meal.category}
+                  onSelect={(cat) => {
+                    setMeal({ ...meal, category: cat });
+                    if (setDraftMeal) setDraftMeal(prev => ({ ...prev, category: cat }));
+                  }}
+                />
+              </fieldset>
+            }
+            footer={<>
+              {formError && <div id="meal-form-error" role="alert" className="alert alert-danger">{formError}</div>}
+              {saving && <p role="status" className="alert alert-info">Saving meal...</p>}
+              {formNotice && <p role="status" className="alert alert-success">{formNotice}</p>}
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
                 <button
                   type="button"
-                  className="recipe-photo-preview"
-                  onClick={() => setShowPreviewModal(true)}
+                  className="recipe-save-button"
+                  disabled={saving || editLoading}
+                  aria-label={saving ? 'Saving meal...' : editLoading ? 'Loading meal...' : editId ? 'Update Recipe' : 'Save Recipe'}
+                  onClick={(event) => { event.preventDefault(); handleSubmit(event); }}
                   onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
                   onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                   onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                  title="Click to view/edit"
                 >
-                  <img src={previewUrl} alt="Preview" style={{ height: '100%', maxWidth: '100%', objectFit: 'contain' }} />
+                  <img src={rusticSaveBtn} alt="Save Recipe" />
                 </button>
-              )}
+              </div>
+            </>}
+          >
+
+            <div className="recipe-form-fields">
+
+              {editLoading && <p role="status" className="alert alert-info">Loading meal for editing...</p>}
+
+              <div>
+                <label className="recipe-field-label" htmlFor="meal-name">Meal name (required)</label>
+                <InputPlank
+                  id="meal-name"
+                  label="Meal name (required)"
+                  name="name"
+                  value={meal.name}
+                  onChange={handleChange}
+                  placeholder="Name Your Dish"
+                  icon={PenIcon}
+                />
+              </div>
+
+              {/* Ingredients Manager (Replaces Text Area) */}
+              <IngredientManager
+                ingredients={meal.ingredients}
+                onChange={(val) => {
+                  setMeal({ ...meal, ingredients: val });
+                  if (setDraftMeal) setDraftMeal(prev => ({ ...prev, ingredients: val }));
+                }}
+              />
+
+              {/* Photo Section Wrapper */}
+              <div style={{ position: 'relative', width: '100%' }}>
+                <p className="recipe-field-label">Photo (optional)</p>
+                <p id="meal-photo-help" className="recipe-field-help">Choose an image up to 5 MB, then crop it to fit.</p>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+                <InputPlank
+                  label="Upload Photo"
+                  describedBy="meal-photo-help"
+                  value={image ? image.name : ""}
+                  readOnly={true}
+                  onClick={() => fileInputRef.current.click()}
+                  icon={PhotoIcon}
+                  placeholder={image ? "Photo Selected" : "Upload Photo"}
+                />
+
+                {/* The photo remains in document flow as the form grows. */}
+                {previewUrl && (
+                  <button
+                    type="button"
+                    className="recipe-photo-preview"
+                    onClick={() => setShowPreviewModal(true)}
+                    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+                    onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                    title="Click to view/edit"
+                  >
+                    <img src={previewUrl} alt="Preview" style={{ height: '100%', maxWidth: '100%', objectFit: 'contain' }} />
+                  </button>
+                )}
+              </div>
+
+
+
             </div>
-
-
-
-            {/* Action */}
-            {/* Action */}
-            {formError && <div id="meal-form-error" role="alert" className="alert alert-danger">{formError}</div>}
-            {saving && <p role="status" className="alert alert-info">Saving meal...</p>}
-            {formNotice && <p role="status" className="alert alert-success">{formNotice}</p>}
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
-              <button
-                type="button"
-                className="recipe-save-button"
-                disabled={saving || editLoading}
-                aria-label={saving ? 'Saving meal...' : editLoading ? 'Loading meal...' : editId ? 'Update Recipe' : 'Save Recipe'}
-                onClick={(event) => { event.preventDefault(); handleSubmit(event); }}
-                onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-              >
-                <img src={rusticSaveBtn} alt="Save Recipe" />
-              </button>
-            </div>
-
-          </form>
-        </ParchmentContainer>
+          </ParchmentContainer>
+        </form>
       </div>
 
       {/* Image Preview Modal */}

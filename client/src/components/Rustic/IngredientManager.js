@@ -153,7 +153,9 @@ function IngredientManager({ ingredients, onChange }) {
     };
 
     return (
-        <div className="ingredient-manager" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <fieldset className="ingredient-manager" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px', border: 0, padding: 0, margin: 0 }}>
+            <legend className="recipe-field-label">Ingredients (required)</legend>
+            <p id="ingredient-entry-help" className="recipe-field-help">Add each ingredient to the list below. Quantity is optional; use “-” when no unit is needed.</p>
 
             {/* Mode Toggle */}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -189,7 +191,11 @@ function IngredientManager({ ingredients, onChange }) {
                 {isBulkMode ? (
                     /* BULK MODE */
                     <div style={{ position: 'relative', zIndex: 1, padding: '10px' }}>
+                        <label className="recipe-field-label" htmlFor="ingredient-paste-list">Ingredient list</label>
+                        <p id="ingredient-paste-help" className="recipe-field-help">Paste ingredients on separate lines or separated by commas, then choose Process List. Check the added ingredients before saving.</p>
                         <textarea
+                            id="ingredient-paste-list"
+                            aria-describedby="ingredient-paste-help"
                             value={bulkText}
                             onChange={(e) => setBulkText(e.target.value)}
                             placeholder={"Paste list here...\n1 Cup Rice\n500g Chicken\n..."}
@@ -226,82 +232,81 @@ function IngredientManager({ ingredients, onChange }) {
                     </div>
                 ) : (
                     /* SINGLE ENTRY MODE */
-                    <div className="ingredient-entry" style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', padding: '10px', gap: '8px' }}>
+                    <div className="ingredient-entry" style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'flex-end', padding: '10px', gap: '8px' }}>
 
                         <div style={{ width: '30px', height: '30px', flexShrink: 0 }}>
                             <IngredientsIcon />
                         </div>
 
                         {/* Qty */}
-                        <input
-                            type="number"
-                            aria-label="Ingredient quantity"
-                            value={tempQty}
-                            onChange={(e) => setTempQty(e.target.value)}
-                            placeholder="1"
-                            style={{
-                                width: '50px',
-                                background: '#fff',
-                                border: '1px solid #a1887f',
-                                borderRadius: '4px',
-                                padding: '5px',
-                                fontFamily: 'Nunito',
-                                fontWeight: 'bold',
-                                textAlign: 'center'
-                            }}
-                        />
+                        <label className="ingredient-entry-field ingredient-quantity-field">
+                            <span>Quantity</span>
+                            <input
+                                type="number"
+                                aria-label="Ingredient quantity"
+                                aria-describedby="ingredient-entry-help"
+                                value={tempQty}
+                                onChange={(e) => setTempQty(e.target.value)}
+                                placeholder="1"
+                                style={{
+                                    width: '100%',
+                                    background: '#fff',
+                                    border: '1px solid #a1887f',
+                                    borderRadius: '4px',
+                                    padding: '5px',
+                                    fontFamily: 'Nunito',
+                                    fontWeight: 'bold',
+                                    textAlign: 'center'
+                                }}
+                            />
+                        </label>
 
                         {/* Native unit selector retains the existing values and labels. */}
-                        <select
-                            className="ingredient-unit-select"
-                            aria-label="Ingredient unit"
-                            value={tempUnit}
-                            onChange={(e) => setTempUnit(e.target.value)}
-                        >
-                            {UNITS.map(unit => <option key={unit.val} value={unit.val}>{unit.label}</option>)}
-                        </select>
+                        <label className="ingredient-entry-field">
+                            <span>Unit</span>
+                            <select
+                                className="ingredient-unit-select"
+                                aria-label="Ingredient unit"
+                                value={tempUnit}
+                                onChange={(e) => setTempUnit(e.target.value)}
+                            >
+                                {UNITS.map(unit => <option key={unit.val} value={unit.val}>{unit.label}</option>)}
+                            </select>
+                        </label>
 
                         {/* Name */}
-                        <input
-                            type="text"
-                            className="ingredient-name-input"
-                            aria-label="Ingredient name"
-                            value={tempName}
-                            onChange={(e) => setTempName(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Ingredient..."
-                            style={{
-                                flex: 1,
-                                background: 'transparent',
-                                border: 'none',
-                                borderBottom: '1px dashed #5d4037',
-                                fontFamily: 'Nunito',
-                                fontSize: '1rem',
-                                fontWeight: 'bold',
-                                color: '#3e2723',
-                                outline: 'none',
-                                padding: '5px'
-                            }}
-                        />
+                        <label className="ingredient-entry-field ingredient-name-field">
+                            <span>Ingredient</span>
+                            <input
+                                type="text"
+                                className="ingredient-name-input"
+                                aria-label="Ingredient name"
+                                value={tempName}
+                                onChange={(e) => setTempName(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Ingredient..."
+                                style={{
+                                    width: '100%',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    borderBottom: '1px dashed #5d4037',
+                                    fontFamily: 'Nunito',
+                                    fontSize: '1rem',
+                                    fontWeight: 'bold',
+                                    color: '#3e2723',
+                                    outline: 'none',
+                                    padding: '5px'
+                                }}
+                            />
+                        </label>
 
                         <button
                             type="button"
+                            className="btn btn-secondary ingredient-add-button"
+                            aria-label="Add ingredient"
                             onClick={handleAdd}
-                            style={{
-                                background: '#5d4037',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '4px',
-                                width: '30px',
-                                height: '30px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontWeight: 'bold'
-                            }}
                         >
-                            +
+                            + Add ingredient
                         </button>
                     </div>
                 )}
@@ -384,7 +389,7 @@ function IngredientManager({ ingredients, onChange }) {
                     )
                 })}
             </div>
-        </div>
+        </fieldset>
     );
 }
 
