@@ -1,0 +1,156 @@
+/* Shared user-facing finishes. Manager screens do not use .app-shell. */
+.app-shell {
+  --rustic-font-body: 'Nunito', sans-serif;
+  --rustic-ink: #4e342e;
+  --rustic-ink-strong: #3e2723;
+  --rustic-wood-rgb: 93, 64, 55;
+  --rustic-wood: rgb(var(--rustic-wood-rgb));
+  --rustic-paper-rgb: 255, 245, 223;
+  --rustic-paper: rgb(var(--rustic-paper-rgb));
+  --rustic-paper-inset-rgb: 239, 224, 191;
+  --rustic-paper-inset: rgb(var(--rustic-paper-inset-rgb));
+  --rustic-paper-edge: #b99c72;
+  --rustic-control-edge: #a1887f;
+  --rustic-focus-rgb: 107, 125, 53;
+  --rustic-focus: rgb(var(--rustic-focus-rgb));
+  /* A darker shade of the existing leaf green keeps text readable on paper. */
+  --rustic-leaf-rgb: 85, 99, 42;
+  --rustic-leaf: rgb(var(--rustic-leaf-rgb));
+  --rustic-danger-rgb: 191, 54, 12;
+  --rustic-danger: rgb(var(--rustic-danger-rgb));
+  --rustic-warning-rgb: 139, 94, 60;
+  --rustic-warning: rgb(var(--rustic-warning-rgb));
+  --rustic-error-paper: #ffccbc;
+  --rustic-radius-control: 4px;
+  --rustic-radius-surface: 8px;
+  --rustic-space-small: .5rem;
+  --rustic-space-gap: .75rem;
+}
+
+.app-shell .app-main {
+  font-family: var(--rustic-font-body);
+  color: var(--rustic-ink);
+  --bs-body-color: var(--rustic-ink);
+  --bs-secondary-color: var(--rustic-wood);
+  --bs-border-color: var(--rustic-paper-edge);
+  /* Bootstrap's background/text utilities require RGB channel values. */
+  --bs-white-rgb: var(--rustic-paper-rgb);
+  --bs-light-rgb: var(--rustic-paper-inset-rgb);
+  --bs-primary-rgb: var(--rustic-leaf-rgb);
+  --bs-success-rgb: var(--rustic-leaf-rgb);
+  --bs-info-rgb: var(--rustic-wood-rgb);
+  --bs-warning-rgb: var(--rustic-warning-rgb);
+  --bs-danger-rgb: var(--rustic-danger-rgb);
+}
+
+/* Existing heading sizes and illustrated/handwritten type remain page-owned. */
+.app-main :is(.page-heading, .card, .user-dialog) :is(h1, h2, h3, h4, h5, h6) {
+  font-weight: 700;
+}
+
+.app-main .card {
+  --bs-card-bg: var(--rustic-paper);
+  --bs-card-color: var(--rustic-ink);
+  --bs-card-border-color: var(--rustic-paper-edge);
+  --bs-card-border-radius: var(--rustic-radius-surface);
+}
+
+.app-main .user-dialog {
+  --bs-modal-bg: var(--rustic-paper);
+  --bs-modal-color: var(--rustic-ink);
+  --bs-modal-border-color: var(--rustic-paper-edge);
+  --bs-modal-border-radius: var(--rustic-radius-surface);
+  --bs-modal-inner-border-radius: var(--rustic-radius-control);
+  --bs-modal-header-border-color: var(--rustic-paper-edge);
+  --bs-modal-footer-border-color: var(--rustic-paper-edge);
+}
+
+.app-main .user-dialog .modal-header {
+  --bs-success-rgb: var(--rustic-wood-rgb);
+  --bs-info-rgb: var(--rustic-wood-rgb);
+  background-color: var(--rustic-wood);
+  color: var(--rustic-paper);
+}
+.app-main .user-dialog .modal-header .btn-close {
+  background-color: var(--rustic-paper);
+  border-radius: var(--rustic-radius-control);
+  opacity: 1;
+}
+
+.app-main .list-group {
+  --bs-list-group-bg: var(--rustic-paper);
+  --bs-list-group-color: var(--rustic-ink);
+  --bs-list-group-border-color: var(--rustic-paper-edge);
+  --bs-list-group-border-radius: var(--rustic-radius-control);
+}
+
+.app-main .table {
+  --bs-table-bg: var(--rustic-paper);
+  --bs-table-color: var(--rustic-ink);
+  --bs-table-border-color: var(--rustic-paper-edge);
+}
+
+/* Only ordinary Bootstrap controls: artwork-backed buttons keep their finishes. */
+.app-main .btn {
+  --rustic-action: var(--rustic-wood);
+  --bs-btn-font-weight: 700;
+  --bs-btn-border-radius: var(--rustic-radius-control);
+  --bs-btn-focus-shadow-rgb: var(--rustic-focus-rgb);
+}
+.app-main :is(.btn-primary, .btn-success, .btn-outline-primary, .btn-outline-success) { --rustic-action: var(--rustic-leaf); }
+.app-main :is(.btn-danger, .btn-outline-danger) { --rustic-action: var(--rustic-danger); }
+.app-main .btn-warning { --rustic-action: var(--rustic-warning); }
+
+.app-main .btn:not(.btn-link) {
+  --bs-btn-color: var(--rustic-paper);
+  --bs-btn-bg: var(--rustic-action);
+  --bs-btn-border-color: var(--rustic-action);
+  --bs-btn-hover-color: var(--rustic-paper);
+  --bs-btn-hover-bg: var(--rustic-ink-strong);
+  --bs-btn-hover-border-color: var(--rustic-ink-strong);
+  --bs-btn-active-color: var(--rustic-paper);
+  --bs-btn-active-bg: var(--rustic-ink-strong);
+  --bs-btn-active-border-color: var(--rustic-ink-strong);
+  --bs-btn-disabled-color: var(--rustic-paper);
+  --bs-btn-disabled-bg: var(--rustic-action);
+  --bs-btn-disabled-border-color: var(--rustic-action);
+}
+.app-main .btn:is(.btn-outline-primary, .btn-outline-secondary, .btn-outline-success, .btn-outline-danger, .btn-outline-info, .btn-outline-dark, .btn-light) {
+  --bs-btn-color: var(--rustic-action);
+  --bs-btn-bg: var(--rustic-paper);
+  --bs-btn-disabled-color: var(--rustic-action);
+  --bs-btn-disabled-bg: var(--rustic-paper);
+}
+.app-main .btn-link {
+  --bs-btn-color: var(--rustic-wood);
+  --bs-btn-hover-color: var(--rustic-ink-strong);
+  --bs-btn-active-color: var(--rustic-ink-strong);
+  --bs-btn-disabled-color: var(--rustic-wood);
+}
+
+.app-main :is(.form-control, .form-select) {
+  color: var(--rustic-ink-strong);
+  background-color: var(--rustic-paper);
+  border-color: var(--rustic-control-edge);
+  border-radius: var(--rustic-radius-control);
+}
+.app-main :is(.form-control, .form-select):focus { border-color: var(--rustic-focus); }
+.app-main :is(.form-control, .form-select):disabled { background-color: var(--rustic-paper-inset); }
+.app-main .form-check-input:checked { background-color: var(--rustic-leaf); border-color: var(--rustic-leaf); }
+
+/* Retain the existing alert/state contracts, including persistent form errors. */
+.app-main :is(.alert, .rustic-alert) {
+  color: var(--rustic-notice-ink, var(--rustic-ink));
+  background-color: var(--rustic-notice-paper, var(--rustic-paper));
+  border: 2px dashed var(--rustic-notice-edge, var(--rustic-paper-edge));
+  border-radius: var(--rustic-radius-surface);
+  padding: var(--rustic-space-gap);
+}
+.app-main :is(.alert-danger, .rustic-alert) {
+  --rustic-notice-ink: var(--rustic-ink-strong);
+  --rustic-notice-paper: var(--rustic-error-paper);
+  --rustic-notice-edge: var(--rustic-danger);
+}
+.app-main .alert-success { --rustic-notice-ink: var(--rustic-leaf); --rustic-notice-edge: var(--rustic-leaf); }
+.app-main .alert-warning { --rustic-notice-ink: var(--rustic-warning); --rustic-notice-edge: var(--rustic-warning); }
+.app-main .alert-info { --rustic-notice-ink: var(--rustic-wood); --rustic-notice-edge: var(--rustic-control-edge); }

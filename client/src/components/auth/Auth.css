@@ -335,11 +335,6 @@
 
 /* Alert Box */
 .rustic-alert {
-    background: #ffccbc;
-    border: 2px dashed #d84315;
-    color: #bf360c;
-    padding: 8px;
-    border-radius: 8px;
     margin-bottom: 15px;
     font-weight: bold;
     font-size: 0.9rem;

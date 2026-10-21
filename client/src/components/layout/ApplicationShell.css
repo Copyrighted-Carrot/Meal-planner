@@ -33,14 +33,14 @@
 .kitchen-navigation .kitchen-menu-toggle { width: auto; justify-content: center; }
 .kitchen-navigation-links { display: none; gap: .75rem; padding-top: .75rem; }
 .kitchen-navigation.is-open .kitchen-navigation-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
-.kitchen-navigation :focus-visible, .app-main :focus-visible { outline: 3px solid #6b7d35; outline-offset: 4px; }
+.kitchen-navigation :focus-visible, .app-main :focus-visible { outline: 3px solid var(--rustic-focus); outline-offset: 4px; }
 
 .skip-to-content { position: fixed; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
 .skip-to-content:focus { width: auto; height: auto; clip-path: none; top: .5rem; left: .5rem; z-index: 11000; padding: .75rem 1rem; background: #fff4d4; color: #4e342e; }
 
 /* Shared page proportions; existing page illustrations and controls remain intact. */
-.page-surface { min-width: 0; width: 100%; padding: clamp(1rem, 3vw, 2rem); background: #fff5df; border: 1px solid #b99c72; color: #4e342e; }
-.page-heading, .page-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; min-width: 0; }
+.page-surface { min-width: 0; width: 100%; padding: clamp(1rem, 3vw, 2rem); background: var(--rustic-paper); border: 1px solid var(--rustic-paper-edge); color: var(--rustic-ink); }
+.page-heading, .page-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--rustic-space-gap); min-width: 0; }
 .page-heading { justify-content: space-between; }
 .page-heading > *, .page-actions > * { min-width: 0; max-width: 100%; }
 .page-actions .btn { white-space: normal; overflow-wrap: anywhere; }

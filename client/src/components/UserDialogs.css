@@ -1,5 +1,5 @@
 .user-dialog {
-    padding: .75rem;
+    padding: var(--rustic-space-gap);
     overflow-y: auto;
 }
 
@@ -7,7 +7,7 @@
     width: 100%;
     max-width: min(100%, 32rem);
     min-height: calc(100% - 1.5rem);
-    margin: .75rem auto;
+    margin: var(--rustic-space-gap) auto;
 }
 
 .user-dialog .modal-dialog.modal-lg {
@@ -25,7 +25,7 @@
 .user-dialog .modal-header,
 .user-dialog .modal-footer {
     flex-wrap: wrap;
-    gap: .5rem;
+    gap: var(--rustic-space-small);
 }
 
 .user-dialog .modal-title,
@@ -51,7 +51,7 @@
 
 .user-dialog-suggestion {
     flex-wrap: wrap;
-    gap: .75rem;
+    gap: var(--rustic-space-gap);
 }
 
 .user-dialog-suggestion-text {
