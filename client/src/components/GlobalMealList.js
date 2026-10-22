@@ -54,15 +54,20 @@ function GlobalMealList({ meals: userMeals, onImport }) {
             <h2 className="text-center mb-4">Public Meal Library 📚</h2>
             <p className="text-center text-muted">Browse and add meals to your personal collection.</p>
 
-            {loading ? <p role="status" className="text-center">Loading Library... 📚</p> : loadError ? (
-                <div role="alert" className="alert alert-danger">
-                    <p>{loadError}</p>
-                    <button className="btn btn-secondary" onClick={() => setLoadAttempt(attempt => attempt + 1)}>Retry</button>
+            {loading ? <div role="status" className="alert alert-info page-state">
+                <p className="page-state-title">Loading Library... 📚</p>
+                <p>Checking for recipes you can add to your collection.</p>
+            </div> : loadError ? (
+                <div role="alert" className="alert alert-danger page-state">
+                    <p className="page-state-title">Recipe library unavailable.</p>
+                    <p className="page-state-detail">{loadError}</p>
+                    <div className="page-state-actions"><button className="btn btn-secondary" onClick={() => setLoadAttempt(attempt => attempt + 1)}>Retry</button></div>
                 </div>
             ) : loadSucceeded ? <div className="public-meal-grid">
                 {globalMeals.length === 0 ? (
-                    <div className="public-meal-empty text-center">
-                        <p>No global meals found. Please check back later.</p>
+                    <div className="public-meal-empty alert page-state page-state-empty">
+                        <p className="page-state-title">No global meals found. Please check back later.</p>
+                        <p>The library loaded successfully, but has no recipes to browse yet.</p>
                     </div>
                 ) : (
                     globalMeals.map((meal) => (

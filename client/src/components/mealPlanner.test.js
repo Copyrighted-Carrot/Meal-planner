@@ -1,5 +1,6 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
+import { MemoryRouter } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { UserDataProvider } from '../context/UserDataContext';
 import { setSessionToken } from '../utils/session';
@@ -7,6 +8,8 @@ import { PLAN_DAYS, PLAN_SLOTS } from '../utils/planDate';
 import api from '../utils/api';
 import MealPlanner from './MealPlanner';
 
+jest.mock('react-router/dom', () => jest.requireActual('react-router/dist/development/dom-export.js'), { virtual: true });
+jest.mock('react-router-dom', () => jest.requireActual('react-router-dom/dist/index.js'), { virtual: true });
 jest.mock('jspdf', () => jest.fn());
 jest.mock('jspdf-autotable', () => jest.fn());
 
@@ -36,7 +39,7 @@ const key = async (name, shiftKey = false) => act(async () => {
 const loadSaved = config => Promise.resolve(reply(config, { weekStart: config.params.weekStart, revision: 2, plan: savedPlan }));
 const mount = async () => act(async () => root.render(
     <AuthContext.Provider value={{ isAuthenticated: true, sessionId: 'planner-component-fixture' }}>
-        <UserDataProvider><MealPlanner meals={meals} /></UserDataProvider>
+        <MemoryRouter><UserDataProvider><MealPlanner meals={meals} /></UserDataProvider></MemoryRouter>
     </AuthContext.Provider>
 ));
 
@@ -93,7 +96,7 @@ test('failed saves show an alert and preserve the previously loaded plan', async
     await click(button('Generate New Plan'));
     expect(saves()).toHaveLength(0);
     await click(button('Confirm replacement'));
-    expect(container.querySelector('[role="alert"]').textContent).toBe('Plan was not saved. Service unavailable');
+    expect(container.querySelector('[role="alert"] .page-state-detail').textContent).toBe('Plan was not saved. Service unavailable');
     expect(container.textContent).toContain('Saved snack');
     expect(container.textContent).not.toContain('Plan saved.');
     expect(button('Reload this week')).toBeDefined();
@@ -192,7 +195,7 @@ test('a failed confirmed replacement keeps the saved plan, displays the existing
     expect(saves()).toHaveLength(1);
     expect(document.activeElement).toBe(trigger);
     expect(container.querySelector('tbody').innerHTML).toBe(before);
-    expect(container.querySelector('[role="alert"]').textContent).toBe('Plan was not saved. Service unavailable');
+    expect(container.querySelector('[role="alert"] .page-state-detail').textContent).toBe('Plan was not saved. Service unavailable');
 });
 
 test('a confirmed save conflict returns focus to the existing Reload action when Generate is unavailable', async () => {

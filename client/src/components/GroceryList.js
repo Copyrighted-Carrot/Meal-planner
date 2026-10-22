@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { useUserData } from '../context/UserDataContext';
 import { captureSession, isCurrentSession } from '../utils/session';
@@ -51,6 +52,9 @@ function GroceryList() {
   const view = state.weekStart === weekStart ? state : emptyList(weekStart);
   const savedList = legacyId ? view.legacy.find(list => list._id === legacyId) || null : view.list;
   const busy = view.busy || planRecord.loading || planRecord.saving;
+  const waitingForList = !view.loaded && !view.error;
+  const waitingForPlan = planRecord.loading || (!planRecord.loaded && !planRecord.error);
+  const showEmptyList = view.loaded && planRecord.loaded && !busy && !view.error && !planRecord.error;
   const canGenerate = view.loaded && planRecord.loaded && !busy && !view.conflict && Boolean(planRecord._id) && weeklyPlan.length > 0;
 
   const mutate = async action => {
@@ -131,9 +135,17 @@ function GroceryList() {
     <label htmlFor="grocery-week">Week beginning Monday</label>
     <input id="grocery-week" type="date" className="form-control mb-2" value={weekStart} disabled={busy}
       onChange={event => { if (event.target.value) selectWeek(event.target.value); }} />
-    {(view.error || planRecord.error) && <div role="alert" className="alert alert-danger">{view.error || planRecord.error}</div>}
-    {busy && <p role="status">Loading or saving groceries...</p>}
-    <button className="btn btn-secondary btn-sm mb-2" disabled={busy} onClick={reload}>Reload this week</button>
+    {(busy || waitingForList || waitingForPlan) && <div role="status" className="alert alert-info page-state">
+      <p className="page-state-title">{waitingForList ? 'Loading your grocery list...' : waitingForPlan ? "Loading this week's plan..." : planRecord.saving ? "Saving this week's plan..." : 'Saving grocery changes...'}</p>
+      <p>{waitingForList || waitingForPlan ? 'Checking the saved list and meal plan for the selected week.' : savedList ? 'Waiting for confirmation. Your saved items stay visible below.' : 'Please wait for this operation to finish.'}</p>
+    </div>}
+    <div role={view.error || planRecord.error ? 'alert' : undefined} className={view.error || planRecord.error ? 'alert alert-danger page-state' : undefined}>
+      {(view.error || planRecord.error) && <>
+        <p className="page-state-title">Grocery list needs attention.</p>
+        <p className="page-state-detail">{view.error || planRecord.error}</p>
+      </>}
+      <button className="btn btn-secondary btn-sm mb-2" disabled={busy} onClick={reload}>Reload this week</button>
+    </div>
     {view.legacy.length > 0 && <div className="mb-2">
       <label htmlFor="legacy-grocery">Saved list</label>
       <select id="legacy-grocery" className="form-control" value={legacyId} disabled={busy}
@@ -142,18 +154,21 @@ function GroceryList() {
         {view.legacy.map(list => <option key={list._id} value={list._id}>Older undated list ({new Date(list.createdAt).toLocaleDateString()})</option>)}
       </select>
     </div>}
-    <div className="card p-3 mb-4 bg-white shadow-sm">
+    {(savedList || showEmptyList) && <div className={savedList ? 'card p-3 mb-4 bg-white shadow-sm' : 'alert page-state page-state-empty'}>
       {savedList ? <div className="page-actions grocery-summary-actions">
         <span className="text-secondary grocery-summary">{legacyId ? 'Older undated list — not assigned to this week' : `Saved list for ${weekStart}`}</span>
         <button className="btn btn-warning btn-sm" disabled={!canGenerate} onClick={generateList}>🔄 Regenerate from Current Plan</button>
-      </div> : <div className="text-center">
-        <p className="mb-2">No saved list for this week.</p>
-        <button className="btn btn-success" disabled={!canGenerate} onClick={generateList}>✨ Generate List from Weekly Plan</button>
-        {planRecord.loaded && weeklyPlan.length === 0 && <p className="text-muted">Create a meal plan for this week first.</p>}
-      </div>}
+      </div> : <>
+        <p className="page-state-title">No saved list for this week.</p>
+        <p>{weeklyPlan.length === 0 ? 'Create a meal plan for this week first.' : "Generate a grocery list from this week's saved meal plan."}</p>
+        <div className="page-state-actions">
+          <button className="btn btn-success" disabled={!canGenerate} onClick={generateList}>✨ Generate List from Weekly Plan</button>
+          {weeklyPlan.length === 0 && <Link className="btn btn-secondary" to="/meal-planner">Open Meal Planner</Link>}
+        </div>
+      </>}
       {savedList?.weekStart === weekStart && savedList.sourcePlanRevision !== planRecord.revision && planRecord.loaded &&
         <p role="status" className="text-warning">The saved plan has changed. Regenerate this list to use it.</p>}
-    </div>
+    </div>}
     {savedList && <>
       <div className="card p-2 bg-light mb-3">
         <div className="page-actions grocery-export-actions">
@@ -164,7 +179,10 @@ function GroceryList() {
         <small>Exports include the complete saved list, including checked items.</small>
       </div>
       <input type="text" className="form-control mb-3" aria-label="Search ingredients" placeholder="Search ingredients..." value={search} onChange={event => setSearch(event.target.value)} />
-      {filteredList.length === 0 ? <p>No ingredients found.</p> : <ul className="list-group">
+      {filteredList.length === 0 ? <div className="alert page-state page-state-empty">
+        <p className="page-state-title">{items.length ? 'No matching ingredients.' : 'No ingredients found.'}</p>
+        <p>{items.length ? 'Try another search or clear the search field to see your saved items.' : 'This saved list has no ingredients.'}</p>
+      </div> : <ul className="list-group">
         {filteredList.slice(0, showAll ? filteredList.length : 5).map(item => <li key={item._id}
           className={`list-group-item grocery-row ${item.checked ? 'bg-light text-decoration-line-through text-muted' : ''}`}
           onClick={() => toggleItem(item)}>

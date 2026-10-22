@@ -1,5 +1,6 @@
 import React, { act, useContext } from 'react';
 import { createRoot } from 'react-dom/client';
+import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider, AuthContext } from '../context/AuthContext';
 import { UserDataProvider, useUserData } from '../context/UserDataContext';
 import { setSessionToken } from '../utils/session';
@@ -10,6 +11,8 @@ import GroceryList from './GroceryList';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+jest.mock('react-router/dom', () => jest.requireActual('react-router/dist/development/dom-export.js'), { virtual: true });
+jest.mock('react-router-dom', () => jest.requireActual('react-router-dom/dist/index.js'), { virtual: true });
 jest.mock('jspdf', () => ({ jsPDF: jest.fn() }));
 jest.mock('jspdf-autotable', () => jest.fn());
 
@@ -46,7 +49,7 @@ function Probe() {
     return auth.isAuthenticated ? <GroceryList /> : null;
 }
 const mount = async (strict = false) => act(async () => {
-    const tree = <AuthProvider><UserDataProvider><Probe /></UserDataProvider></AuthProvider>;
+    const tree = <MemoryRouter><AuthProvider><UserDataProvider><Probe /></UserDataProvider></AuthProvider></MemoryRouter>;
     root.render(strict ? <React.StrictMode>{tree}</React.StrictMode> : tree);
 });
 const defaultResponse = async config => {
@@ -181,8 +184,9 @@ test.each([409, 503])('failed checkbox save (%s) preserves checks and requires r
 test('load failure is visible and retry loads the saved list instead of presenting a false empty result', async () => {
     respond = config => config.url === '/grocery' ? fail(config, 503, 'Groceries unavailable') : defaultResponse(config);
     await mount();
-    expect(container.querySelector('[role="alert"]').textContent).toBe('Groceries unavailable');
-    expect(button('Generate List from Weekly Plan').disabled).toBe(true);
+    expect(container.querySelector('[role="alert"] .page-state-detail').textContent).toBe('Groceries unavailable');
+    expect(container.textContent).not.toContain('No saved list for this week');
+    expect(button('Generate List from Weekly Plan')).toBeUndefined();
     respond = defaultResponse;
     await click(button('Reload this week'));
     expect(container.textContent).toContain('A Carrots: 3 kg');

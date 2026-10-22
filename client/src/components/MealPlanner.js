@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useUserData } from "../context/UserDataContext";
 import { PLAN_DAYS } from "../utils/planDate";
 import useDialogFocus from "../hooks/useDialogFocus";
@@ -17,6 +18,8 @@ const planColumns = [
 function MealPlanner({ meals }) {
   const { weeklyPlan, weekStart, selectWeek, planRecord, loadPlan, savePlan, mealsLoading, mealsError } = useUserData();
   const busy = planRecord.loading || planRecord.saving;
+  const waitingForPlan = planRecord.loading || (!planRecord.loaded && !planRecord.error);
+  const showEmptyPlan = planRecord.loaded && !busy && !planRecord.error && !mealsLoading && !mealsError;
   const [replacementWeek, setReplacementWeek] = useState(null);
   const confirmingReplacement = useRef(false);
   const restoreReplacementFocus = useRef(false);
@@ -150,11 +153,27 @@ function MealPlanner({ meals }) {
       <label htmlFor="plan-week">Week beginning Monday</label>
       <input id="plan-week" type="date" className="form-control mb-2" value={weekStart} disabled={planRecord.saving}
         onChange={event => { if (event.target.value) selectWeek(event.target.value); }} />
-      {planRecord.loading && <p role="status">Loading this week's plan...</p>}
-      {planRecord.saving && <p role="status">Saving this week's plan...</p>}
+      {waitingForPlan && !planRecord.saving && <div role="status" className="alert alert-info page-state">
+        <p className="page-state-title">Loading this week's plan...</p>
+        <p>{weeklyPlan.length ? 'Your previously loaded plan remains below while this week refreshes.' : 'Checking the saved plan for the selected week.'}</p>
+      </div>}
+      {!waitingForPlan && !planRecord.saving && mealsLoading && <div role="status" className="alert alert-info page-state">
+        <p className="page-state-title">Loading meals for planning...</p>
+        <p>Meal choices are still loading. Please wait before generating a plan.</p>
+      </div>}
+      {planRecord.saving && <div role="status" className="alert alert-info page-state">
+        <p className="page-state-title">Saving this week's plan...</p>
+        <p>Waiting for confirmation before the saved plan changes.</p>
+      </div>}
       {planRecord.notice && <p role="status" className="text-success">{planRecord.notice}</p>}
-      {(planRecord.error || mealsError) && <div role="alert" className="alert alert-danger">{planRecord.error || mealsError}</div>}
-      {planRecord.error && <button ref={reloadButtonRef} className="btn btn-secondary mb-2" disabled={busy} onClick={() => loadPlan(true)}>Reload this week</button>}
+      {(planRecord.error || mealsError) && <div role="alert" className="alert alert-danger page-state">
+        <p className="page-state-title">Meal plan needs attention.</p>
+        <p className="page-state-detail">{planRecord.error || mealsError}</p>
+        <div className="page-state-actions">
+          {planRecord.error ? <button ref={reloadButtonRef} className="btn btn-secondary mb-2" disabled={busy} onClick={() => loadPlan(true)}>Reload this week</button>
+            : <Link className="btn btn-secondary" to="/available-meals">Open Available Meals to retry</Link>}
+        </div>
+      </div>}
       {planRecord.legacyPlan?.length > 0 && <div className="alert alert-info">
         An older undated plan is available. It has not been assigned to this week.
         <button className="btn btn-secondary ms-2" disabled={busy || !planRecord.loaded}
@@ -162,7 +181,14 @@ function MealPlanner({ meals }) {
       </div>}
       <h2 id="planner-heading">Weekly Meal Plan 📅</h2>
       {weeklyPlan.length === 0 ? (
-        <p>{meals.length ? 'No saved plan for this week. Generate one below.' : 'No meals available. Add some meals first!'}</p>
+        showEmptyPlan && <div className="alert page-state page-state-empty">
+          <p className="page-state-title">{meals.length ? 'No saved plan for this week.' : 'No meals available.'}</p>
+          <p>{meals.length ? 'Generate one below using your saved meals.' : 'Add some meals first, then generate a plan for this week.'}</p>
+          {!meals.length && <div className="page-state-actions">
+            <Link className="btn btn-primary" to="/add">Add Meal</Link>
+            <Link className="btn btn-secondary" to="/browse">Browse Recipes</Link>
+          </div>}
+        </div>
       ) : (
         <>
           <table className="table planner-table" aria-labelledby="planner-heading" role="table">

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import api from '../utils/api';
 import { useUserData } from '../context/UserDataContext';
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import MealCard from "./Rustic/MealCard";
 import MealListTitle from "./Rustic/MealListTitle";
 import "./MealList.css";
@@ -87,7 +87,7 @@ function MealList() {
       <MealListTitle />
 
       {/* Control Bar */}
-      <div className="rustic-meal-controls">
+      {meals.length > 0 && <div className="rustic-meal-controls">
         {!isSelectionMode ? (
           <button className="btn btn-outline-dark" style={{ fontWeight: 'bold' }} onClick={toggleSelectionMode}>
             ✨ Select Multiple
@@ -105,13 +105,29 @@ function MealList() {
             </button>
           </>
         )}
-      </div>
+      </div>}
 
-      {mealsLoading ? <p role="status">Loading your meals...</p> : mealsError ? <p role="alert">{mealsError} <button onClick={() => refreshMeals().catch(() => {})}>Retry</button></p> : meals.length === 0 ? (
-        <div className="text-center mt-5" style={{ color: '#5d4037', fontSize: '1.5rem', fontWeight: 'bold' }}>
-          <p>No meals found. Start cooking! 🥕</p>
+      {mealsLoading && <div role="status" className="alert alert-info page-state">
+        <p className="page-state-title">{meals.length ? 'Refreshing your meals...' : 'Loading your meals...'}</p>
+        <p>{meals.length ? 'Your current collection is shown below while it refreshes.' : 'Checking your saved recipes. Your collection will appear here.'}</p>
+      </div>}
+      {mealsError && <div role="alert" className="alert alert-danger page-state">
+        <p className="page-state-title">Your meal collection could not be loaded.</p>
+        <p className="page-state-detail">{mealsError}</p>
+        {meals.length > 0 && <p>Your previously loaded meals are still shown below.</p>}
+        <div className="page-state-actions"><button className="btn btn-secondary" onClick={() => refreshMeals().catch(() => {})}>Retry</button></div>
+      </div>}
+      {!mealsLoading && !mealsError && meals.length === 0 && (
+        <div className="alert page-state page-state-empty">
+          <p className="page-state-title">No meals saved yet.</p>
+          <p>Add your first recipe or browse the library to start your collection.</p>
+          <div className="page-state-actions">
+            <Link className="btn btn-primary" to="/add">Add Meal</Link>
+            <Link className="btn btn-secondary" to="/browse">Browse Recipes</Link>
+          </div>
         </div>
-      ) : (
+      )}
+      {meals.length > 0 && (
         <div className="rustic-meal-grid">
           {meals.map((meal) => (
             <MealCard

@@ -154,3 +154,34 @@
 .app-main .alert-success { --rustic-notice-ink: var(--rustic-leaf); --rustic-notice-edge: var(--rustic-leaf); }
 .app-main .alert-warning { --rustic-notice-ink: var(--rustic-warning); --rustic-notice-edge: var(--rustic-warning); }
 .app-main .alert-info { --rustic-notice-ink: var(--rustic-wood); --rustic-notice-edge: var(--rustic-control-edge); }
+
+/* Page states reuse the existing alert palette and focus/button treatments. */
+.app-main .page-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rustic-space-small);
+  min-width: 0;
+  font-weight: 400;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.app-main .page-state > p { margin: 0; }
+.app-main .page-state-title {
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.app-main .page-state-empty { border-style: solid; }
+.app-main .page-state.alert-danger { border-inline-start: .375rem solid var(--rustic-danger); }
+.app-main .page-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rustic-space-small);
+  margin-top: .25rem;
+}
+.app-main .page-state .btn {
+  align-self: flex-start;
+  min-height: 2.75rem;
+  max-width: 100%;
+  white-space: normal;
+}
