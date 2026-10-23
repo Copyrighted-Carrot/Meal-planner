@@ -219,7 +219,7 @@ test('Smart Fridge suggestion failure is retryable without retyping ingredients'
     expect(JSON.parse(retriedConfig.data)).toEqual({ ingredients: 'carrot, potato' });
 });
 
-test('Starter Pack locks switch, dismissal and repeat import through the refresh stage', async () => {
+test('Starter Pack guards same-turn conflicting actions and stays locked through the refresh stage', async () => {
     const imported = deferred();
     const refresh = deferred();
     const onImport = jest.fn(() => refresh.promise);
@@ -227,9 +227,21 @@ test('Starter Pack locks switch, dismissal and repeat import through the refresh
     const onSwitch = jest.fn();
     api.defaults.adapter = jest.fn(config => imported.promise.then(() => response(config)));
     await act(async () => root.render(<StarterPackModal isOpen onImport={onImport} onClose={onClose} onSwitch={onSwitch} />));
-    await act(async () => click(/Import Starter Pack/));
+    await act(async () => {
+        const importButton = button(/Import Starter Pack/);
+        importButton.click();
+        importButton.click();
+        click(/suggest meals/);
+        click(/start from scratch/);
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(api.defaults.adapter).toHaveBeenCalledTimes(1);
+    expect(onImport).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onSwitch).not.toHaveBeenCalled();
     for (const control of container.querySelectorAll('button')) expect(control.disabled).toBe(true);
-    expect(button(/Importing/)).toBeDefined();
+    expect(button(/^Importing\.\.\.$/)).toBeDefined();
+    expect(container.querySelector('[role="status"]').textContent).toContain('Importing your starter pack...');
     await act(async () => {
         click(/suggest meals/);
         click(/start from scratch/);
@@ -239,24 +251,30 @@ test('Starter Pack locks switch, dismissal and repeat import through the refresh
     expect(onSwitch).not.toHaveBeenCalled();
     await act(async () => imported.resolve());
     expect(onImport).toHaveBeenCalledTimes(1);
+    expect(button(/^Refreshing\.\.\.$/)).toBeDefined();
+    expect(container.querySelector('[role="status"]').textContent).toContain('Refreshing your meals...');
     for (const control of container.querySelectorAll('button')) expect(control.disabled).toBe(true);
     expect(onClose).not.toHaveBeenCalled();
     expect(window.alert).not.toHaveBeenCalled();
     await act(async () => refresh.resolve());
     expect(onClose).toHaveBeenCalledTimes(1);
-    if (window.alert.mock.calls.length) {
-        expect(onClose.mock.invocationCallOrder[0]).toBeLessThan(window.alert.mock.invocationCallOrder[0]);
-    }
+    expect(window.alert).toHaveBeenCalledTimes(1);
+    expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Starter pack imported!'));
+    expect(onClose.mock.invocationCallOrder[0]).toBeLessThan(window.alert.mock.invocationCallOrder[0]);
     expect(api.defaults.adapter).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('[role="status"]')).toBeNull();
+    for (const control of container.querySelectorAll('button')) expect(control.disabled).toBe(false);
 });
 
 test('Starter Pack failure remains visible with Retry and restores alternate actions', async () => {
+    const retry = deferred();
     const onImport = jest.fn();
     const onClose = jest.fn();
+    const onSwitch = jest.fn();
     api.defaults.adapter = jest.fn()
         .mockImplementationOnce(config => Promise.reject(failure(config)))
-        .mockImplementationOnce(async config => response(config));
-    await act(async () => root.render(<StarterPackModal isOpen onImport={onImport} onClose={onClose} onSwitch={jest.fn()} />));
+        .mockImplementationOnce(config => retry.promise.then(() => response(config)));
+    await act(async () => root.render(<StarterPackModal isOpen onImport={onImport} onClose={onClose} onSwitch={onSwitch} />));
     await act(async () => click(/Import Starter Pack/));
     expect(container.querySelector('[role="alert"]').textContent).toContain('Could not import the starter pack. Please try again.');
     expect(button(/suggest meals/).disabled).toBe(false);
@@ -264,27 +282,113 @@ test('Starter Pack failure remains visible with Retry and restores alternate act
     expect(onClose).not.toHaveBeenCalled();
     expect(onImport).not.toHaveBeenCalled();
     expect(window.alert).not.toHaveBeenCalled();
-    await act(async () => click(/Retry/));
+    await act(async () => {
+        click(/suggest meals/);
+        click(/start from scratch/);
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(onSwitch).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(2);
+    onSwitch.mockClear();
+    onClose.mockClear();
+    await act(async () => {
+        const retryButton = button(/^Retry$/);
+        retryButton.click();
+        retryButton.click();
+        click(/Import Starter Pack/);
+        click(/suggest meals/);
+        click(/start from scratch/);
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
     expect(api.defaults.adapter).toHaveBeenCalledTimes(2);
+    expect(onImport).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onSwitch).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+    for (const control of container.querySelectorAll('button')) expect(control.disabled).toBe(true);
+    await act(async () => retry.resolve());
     expect(onImport).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
 });
 
 test('Starter Pack Retry refreshes existing imports without posting another starter pack', async () => {
+    const refresh = deferred();
     const onImport = jest.fn()
         .mockRejectedValueOnce(new Error('Fixture refresh failed.'))
-        .mockResolvedValueOnce(undefined);
+        .mockImplementationOnce(() => refresh.promise);
     const onClose = jest.fn();
+    const onSwitch = jest.fn();
     api.defaults.adapter = jest.fn(async config => response(config));
-    await act(async () => root.render(<StarterPackModal isOpen onImport={onImport} onClose={onClose} onSwitch={jest.fn()} />));
+    await act(async () => root.render(<StarterPackModal isOpen onImport={onImport} onClose={onClose} onSwitch={onSwitch} />));
     await act(async () => click(/Import Starter Pack/));
-    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+    expect(container.querySelector('[role="alert"]').textContent).toContain('Starter pack imported, but your collection could not be refreshed. Retry to reload your meals.');
+    expect(button(/^Refresh meals$/).disabled).toBe(false);
     expect(onClose).not.toHaveBeenCalled();
     expect(window.alert).not.toHaveBeenCalled();
-    await act(async () => click(/Retry/));
+    await act(async () => {
+        const retryButton = button(/^Retry$/);
+        retryButton.click();
+        retryButton.click();
+        click(/^Refresh meals$/);
+        click(/suggest meals/);
+        click(/start from scratch/);
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
     expect(onImport).toHaveBeenCalledTimes(2);
     expect(api.defaults.adapter).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('[role="status"]').textContent).toContain('Refreshing your meals...');
+    expect(text()).not.toContain('Importing your starter pack...');
+    for (const control of container.querySelectorAll('button')) expect(control.disabled).toBe(true);
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onSwitch).not.toHaveBeenCalled();
+    await act(async () => refresh.resolve());
     expect(onClose).toHaveBeenCalledTimes(1);
+    expect(api.defaults.adapter).toHaveBeenCalledTimes(1);
+});
+
+test('Starter Pack retains its existing keyboard trap while pending and restores focus after recovery', async () => {
+    const request = deferred();
+    const onSwitch = jest.fn();
+    api.defaults.adapter = jest.fn(config => request.promise.then(() => response(config)));
+    function Flow() {
+        const [open, setOpen] = React.useState(false);
+        return <>
+            <button onClick={() => setOpen(true)}>Open starter pack</button>
+            <StarterPackModal isOpen={open} onImport={jest.fn()} onClose={() => setOpen(false)} onSwitch={onSwitch} />
+        </>;
+    }
+    const key = (name, shiftKey = false) => document.activeElement.dispatchEvent(
+        new KeyboardEvent('keydown', { key: name, shiftKey, bubbles: true, cancelable: true }));
+    await act(async () => root.render(<Flow />));
+    const opener = button(/^Open starter pack$/);
+    opener.focus();
+    await act(async () => opener.click());
+    expect(document.activeElement).toBe(button(/suggest meals/));
+    await act(async () => click(/suggest meals/));
+    expect(onSwitch).toHaveBeenCalledTimes(1);
+    await act(async () => key('Escape'));
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+
+    await act(async () => opener.click());
+    await act(async () => click(/Import Starter Pack/));
+    const dialog = container.querySelector('[role="dialog"]');
+    await act(async () => key('Tab'));
+    expect(document.activeElement).toBe(dialog);
+    await act(async () => key('Tab', true));
+    expect(document.activeElement).toBe(dialog);
+    await act(async () => key('Escape'));
+    expect(container.querySelector('[role="dialog"]')).toBe(dialog);
+    await act(async () => request.reject(new Error('Fixture import failed.')));
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+    await act(async () => key('Tab'));
+    expect(document.activeElement).toBe(button(/^Retry$/));
+    await act(async () => key('Tab', true));
+    expect(document.activeElement).toBe(button(/Import Starter Pack/));
+    await act(async () => key('Escape'));
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+    expect(api.defaults.adapter).toHaveBeenCalledTimes(1);
 });
 
 test.each(['Smart Fridge', 'Starter Pack'])('%s leaves expired-session handling to the existing auth flow', async kind => {
