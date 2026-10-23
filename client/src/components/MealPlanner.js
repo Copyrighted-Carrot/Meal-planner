@@ -241,12 +241,12 @@ function MealPlanner({ meals }) {
                 <h2 className="modal-title h5" id="replace-plan-title">Replace saved meal plan?</h2>
               </div>
               <div className="modal-body">
-                <p id="replace-plan-description">Generating a new plan will replace the saved plan for the week beginning Monday, <strong className="text-nowrap">{replacementWeek}</strong>.</p>
-                {planRecord.saving && <p role="status">Replacing the saved plan...</p>}
+                <p id="replace-plan-description" className="alert alert-warning">Generating a new plan will replace the saved plan for the week beginning Monday, <strong className="text-nowrap">{replacementWeek}</strong>.</p>
+                {planRecord.saving && <p role="status" className="alert alert-info">Replacing the saved plan...</p>}
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={cancelReplacement} disabled={planRecord.saving}>Cancel</button>
-                <button type="button" className="btn btn-success" onClick={confirmReplacement}
+                <button type="button" className="btn btn-outline-secondary" onClick={cancelReplacement} disabled={planRecord.saving}>Cancel</button>
+                <button type="button" className="btn btn-danger" onClick={confirmReplacement}
                   disabled={busy || !planRecord.loaded || mealsLoading || !meals.length}>
                   {planRecord.saving ? "Replacing..." : "Confirm replacement"}
                 </button>

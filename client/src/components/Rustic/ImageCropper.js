@@ -3,6 +3,7 @@ import Cropper from 'react-easy-crop';
 import getCroppedImg from '../../utils/cropUtils';
 import rusticCarrotBtn from '../../assets/rustic-carrot-btn.png';
 import useDialogFocus from '../../hooks/useDialogFocus';
+import '../UserDialogs.css';
 
 const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -49,10 +50,7 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
             <div className="recipe-crop-stage" style={{
                 position: 'relative',
                 backgroundColor: '#333',
-                borderRadius: '8px',
                 overflow: 'hidden',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
-                border: '3px solid #5d4037'
             }}>
                 <Cropper
                     image={imageSrc}
@@ -71,7 +69,7 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
                 alignItems: 'center',
                 gap: '15px',
             }}>
-                <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', color: 'white' }}>
+                <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--rustic-ink)' }}>
                     <span style={{ fontWeight: 'bold' }}>Zoom:</span>
                     <input
                         type="range"
@@ -88,17 +86,8 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
                 <div className="recipe-crop-actions">
                     <button
                         type="button"
+                        className="btn btn-outline-secondary"
                         onClick={onCancel}
-                        style={{
-                            padding: '10px 20px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            backgroundColor: '#e74c3c',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            fontSize: '1rem'
-                        }}
                     >
                         Cancel
                     </button>

@@ -114,6 +114,9 @@ test('saved-week generation explains replacement with the selected week and wait
     expect(modal.getAttribute('aria-modal')).toBe('true');
     expect(document.getElementById(modal.getAttribute('aria-labelledby')).textContent).toBe('Replace saved meal plan?');
     expect(document.getElementById(modal.getAttribute('aria-describedby')).textContent).toContain('replace the saved plan for the week beginning Monday, 2026-10-12');
+    expect(button('Cancel').classList.contains('btn-outline-secondary')).toBe(true);
+    expect(button('Confirm replacement').classList.contains('btn-danger')).toBe(true);
+    expect(button('Confirm replacement').classList.contains('btn-success')).toBe(false);
     expect(document.activeElement).toBe(button('Cancel'));
     expect(saves()).toHaveLength(0);
     expect(requests).toHaveLength(requestCount);
@@ -172,6 +175,7 @@ test('Confirm saves once through the existing flow with the selected week and un
     expect(dialog().textContent).toContain('Replacing the saved plan...');
     expect(button('Cancel').disabled).toBe(true);
     expect(button('Replacing...').disabled).toBe(true);
+    expect(button('Replacing...').classList.contains('btn-danger')).toBe(true);
     await key('Escape');
     expect(dialog()).not.toBeNull();
     expect(saves()).toHaveLength(1);

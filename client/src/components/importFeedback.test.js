@@ -104,6 +104,47 @@ test.each(['expired', 'switched'])('Browse does not show successful-empty feedba
     expect(button(/Retry/)).toBeUndefined();
 });
 
+test('Smart Fridge secondary controls preserve close, back and keyboard focus behavior', async () => {
+    const onBack = jest.fn();
+    const onClose = jest.fn();
+    api.defaults.adapter = jest.fn();
+    function Flow() {
+        const [open, setOpen] = React.useState(false);
+        return <>
+            <button onClick={() => setOpen(true)}>Open fridge</button>
+            <SmartImportModal isOpen={open} onImport={jest.fn()} onBack={onBack}
+                onClose={() => { onClose(); setOpen(false); }} />
+        </>;
+    }
+    const key = (name, shiftKey = false) => document.activeElement.dispatchEvent(
+        new KeyboardEvent('keydown', { key: name, shiftKey, bubbles: true, cancelable: true }));
+    await act(async () => root.render(<Flow />));
+    const opener = button(/^Open fridge$/);
+    opener.focus();
+    await act(async () => opener.click());
+    const closeIcon = container.querySelector('[aria-label="Close Smart Fridge"]');
+    const close = button(/^Close$/);
+    expect(close.classList.contains('btn-outline-secondary')).toBe(true);
+    expect(document.activeElement).toBe(closeIcon);
+    await act(async () => key('Tab', true));
+    expect(document.activeElement).toBe(close);
+    await act(async () => key('Tab'));
+    expect(document.activeElement).toBe(closeIcon);
+    await act(async () => click(/^Back to Starter Pack$/));
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => key('Escape'));
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    await act(async () => opener.click());
+    await act(async () => click(/^Close$/));
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.activeElement).toBe(opener);
+    expect(onClose).toHaveBeenCalledTimes(2);
+    expect(api.defaults.adapter).not.toHaveBeenCalled();
+});
+
 test('Smart Fridge stays Adding until copy and shared-meal refresh both finish', async () => {
     const copy = deferred();
     const refresh = deferred();
@@ -114,6 +155,7 @@ test('Smart Fridge stays Adding until copy and shared-meal refresh both finish',
     await showSuggestions(onImport);
     await act(async () => click(/^Add$/));
     expect(button(/^Adding\.\.\.$/).disabled).toBe(true);
+    expect(container.querySelector('[role="status"]').classList.contains('alert-info')).toBe(true);
     expect(button(/^Added$/)).toBeUndefined();
     expect(onImport).not.toHaveBeenCalled();
     await act(async () => copy.resolve());
@@ -138,6 +180,7 @@ test('Smart Fridge reports copy failure inline and Retry copies the same recipe'
     await showSuggestions(onImport);
     await act(async () => click(/^Add$/));
     expect(container.querySelector('[role="alert"]').textContent).toContain('Could not add this meal. Please try again.');
+    expect(container.querySelector('[role="alert"]').classList.contains('page-state')).toBe(true);
     expect(onImport).not.toHaveBeenCalled();
     expect(window.alert).not.toHaveBeenCalled();
     await act(async () => click(/Retry/));
@@ -198,6 +241,7 @@ test('Smart Fridge explains zero matches and retains the ingredients for another
     api.defaults.adapter = jest.fn(async config => response(config, []));
     await showSuggestions();
     expect(text()).toContain('No recipes matched these ingredients. Try a different combination.');
+    expect(container.querySelector('[role="status"]').classList.contains('page-state-empty')).toBe(true);
     expect(container.querySelector('textarea').value).toBe('carrot, potato');
     expect(button(/Find Recipes/).disabled).toBe(false);
     expect(container.querySelector('[role="alert"]')).toBeNull();
@@ -364,6 +408,7 @@ test('Starter Pack retains its existing keyboard trap while pending and restores
     opener.focus();
     await act(async () => opener.click());
     expect(document.activeElement).toBe(button(/suggest meals/));
+    expect(button(/start from scratch/).classList.contains('btn-outline-secondary')).toBe(true);
     await act(async () => click(/suggest meals/));
     expect(onSwitch).toHaveBeenCalledTimes(1);
     await act(async () => key('Escape'));

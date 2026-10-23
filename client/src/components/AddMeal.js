@@ -6,6 +6,7 @@ import { useCarrot } from "../context/CarrotContext";
 import { useUserData } from '../context/UserDataContext';
 import { captureSession, isCurrentSession } from '../utils/session';
 import useDialogFocus from '../hooks/useDialogFocus';
+import './UserDialogs.css';
 
 import ParchmentContainer from "./Rustic/ParchmentContainer";
 import InputPlank from "./Rustic/InputPlank";
@@ -406,29 +407,13 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
             <img
               src={previewUrl}
               alt="Full Size"
-              style={{
-                border: '5px solid #5d4037',
-                borderRadius: '8px',
-                boxShadow: '0 0 20px rgba(0,0,0,0.5)'
-              }}
             />
 
             {/* Side Options */}
-            <div className="recipe-preview-actions" style={{
-              backgroundColor: '#deb887',
-              padding: '15px',
-              borderRadius: '12px',
-              border: '3px solid #5d4037',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.4)'
-            }}>
+            <div className="recipe-preview-actions">
               <button
                 type="button"
                 onClick={handleReplaceClick}
-                style={{
-                  background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'transform 0.2s'
-                }}
                 title="Replace Image"
                 onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -437,12 +422,8 @@ function AddMeal({ setMeals, onOpenSmartFridge, draftMeal, setDraftMeal }) {
               </button>
               <button
                 type="button"
+                className="recipe-preview-remove"
                 onClick={handleRemoveImage}
-                style={{
-                  background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'transform 0.2s'
-                }}
                 title="Delete Image"
                 onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}

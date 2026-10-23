@@ -1,5 +1,6 @@
 /* Shared user-facing finishes. Manager screens do not use .app-shell. */
-.app-shell {
+.app-shell,
+.recipe-preview-overlay {
   --rustic-font-body: 'Nunito', sans-serif;
   --rustic-ink: #4e342e;
   --rustic-ink-strong: #3e2723;
@@ -25,6 +26,7 @@
   --rustic-radius-surface: 8px;
   --rustic-space-small: .5rem;
   --rustic-space-gap: .75rem;
+  --rustic-dialog-shadow: 0 4px 10px rgba(var(--rustic-wood-rgb), .35);
 }
 
 .app-shell .app-main {

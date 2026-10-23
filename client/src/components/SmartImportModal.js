@@ -78,19 +78,19 @@ function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
                         <button type="button" className="btn-close" aria-label="Close Smart Fridge" onClick={onClose}></button>
                     </div>
                     <div className="modal-body">
-                        {suggestionError && <div role="alert" className="alert alert-danger">
+                        {suggestionError && <div role="alert" className="alert alert-danger page-state">
                             <p>{suggestionError}</p>
                             <button className="btn btn-secondary" onClick={handleSuggest} disabled={loading}>Retry</button>
                         </div>}
-                        {importError && <div role="alert" className="alert alert-danger">
+                        {importError && <div role="alert" className="alert alert-danger page-state">
                             <p>{importError.message}</p>
                             <button className="btn btn-secondary" onClick={() => handleAdd(importError.mealId)} disabled={addingId !== null}>Retry</button>
                         </div>}
-                        {addingId !== null && <p role="status">Adding meal and refreshing your collection...</p>}
+                        {addingId !== null && <p role="status" className="alert alert-info">Adding meal and refreshing your collection...</p>}
                         {notice && <p role="status" className="alert alert-success">{notice}</p>}
                         {!suggestions.length && !loading && (
                             <div className="text-center">
-                                {searched && <p role="status">No recipes matched these ingredients. Try a different combination.</p>}
+                                {searched && <p role="status" className="alert page-state-empty">No recipes matched these ingredients. Try a different combination.</p>}
                                 <p>What ingredients do you have? 🍳</p>
                                 <textarea
                                     className="form-control mb-3"
@@ -109,7 +109,7 @@ function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
                             </div>
                         )}
 
-                        {loading && <div role="status" className="text-center py-4">Checking the recipe book... 📖</div>}
+                        {loading && <div role="status" className="alert alert-info text-center py-4">Checking the recipe book... 📖</div>}
 
                         {suggestions.length > 0 && (
                             <div>
@@ -144,7 +144,7 @@ function SmartImportModal({ isOpen, onClose, onImport, onBack }) {
                     </div>
                     <div className="modal-footer">
                         {onBack && <button className="btn btn-link" onClick={onBack}>Back to Starter Pack</button>}
-                        <button className="btn btn-secondary" onClick={onClose}>Close</button>
+                        <button className="btn btn-outline-secondary" onClick={onClose}>Close</button>
                     </div>
                 </div>
             </div>

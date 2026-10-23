@@ -70,7 +70,7 @@ function StarterPackModal({ isOpen, onClose, onImport, onSwitch }) {
                         </button>
                     </div>
                     <div className="modal-footer justify-content-center">
-                        <button className="btn btn-secondary" onClick={handleClose} disabled={loading}>
+                        <button className="btn btn-outline-secondary" onClick={handleClose} disabled={loading}>
                             No, I'll start from scratch
                         </button>
                         <button className="btn btn-success btn-lg" onClick={handleImport} disabled={loading}>
