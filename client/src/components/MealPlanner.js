@@ -150,9 +150,18 @@ function MealPlanner({ meals }) {
 
   return (
     <div className="page-surface planner-page">
-      <label htmlFor="plan-week">Week beginning Monday</label>
-      <input id="plan-week" type="date" className="form-control mb-2" value={weekStart} disabled={planRecord.saving}
-        onChange={event => { if (event.target.value) selectWeek(event.target.value); }} />
+      <h2 id="planner-heading" className="mb-3">Weekly Meal Plan 📅</h2>
+      <div className="page-actions planning-week-controls" role="group" aria-label="Plan this week">
+        <div className="planning-week-field">
+          <label htmlFor="plan-week">Week beginning Monday</label>
+          <input id="plan-week" type="date" className="form-control" value={weekStart} disabled={planRecord.saving}
+            onChange={event => { if (event.target.value) selectWeek(event.target.value); }} />
+        </div>
+        <button className="btn btn-success" onClick={requestGeneration}
+          disabled={busy || !planRecord.loaded || mealsLoading || !meals.length}>
+          🔄 Generate New Plan
+        </button>
+      </div>
       {waitingForPlan && !planRecord.saving && <div role="status" className="alert alert-info page-state">
         <p className="page-state-title">Loading this week's plan...</p>
         <p>{weeklyPlan.length ? 'Your previously loaded plan remains below while this week refreshes.' : 'Checking the saved plan for the selected week.'}</p>
@@ -175,15 +184,16 @@ function MealPlanner({ meals }) {
         </div>
       </div>}
       {planRecord.legacyPlan?.length > 0 && <div className="alert alert-info">
-        An older undated plan is available. It has not been assigned to this week.
-        <button className="btn btn-secondary ms-2" disabled={busy || !planRecord.loaded}
-          onClick={() => savePlan(planRecord.legacyPlan).catch(() => {})}>Copy older plan to this week</button>
+        <p>An older undated plan is available. It has not been assigned to this week.</p>
+        <div className="page-actions">
+          <button className="btn btn-outline-secondary" disabled={busy || !planRecord.loaded}
+            onClick={() => savePlan(planRecord.legacyPlan).catch(() => {})}>Copy older plan to this week</button>
+        </div>
       </div>}
-      <h2 id="planner-heading">Weekly Meal Plan 📅</h2>
       {weeklyPlan.length === 0 ? (
         showEmptyPlan && <div className="alert page-state page-state-empty">
           <p className="page-state-title">{meals.length ? 'No saved plan for this week.' : 'No meals available.'}</p>
-          <p>{meals.length ? 'Generate one below using your saved meals.' : 'Add some meals first, then generate a plan for this week.'}</p>
+          <p>{meals.length ? 'Use Generate New Plan above to plan with your saved meals.' : 'Add some meals first, then generate a plan for this week.'}</p>
           {!meals.length && <div className="page-state-actions">
             <Link className="btn btn-primary" to="/add">Add Meal</Link>
             <Link className="btn btn-secondary" to="/browse">Browse Recipes</Link>
@@ -217,20 +227,16 @@ function MealPlanner({ meals }) {
           </table>
 
           {/* Share Plan Actions */}
-          <div className="card mt-4 p-3 bg-light">
-            <h4>Share Meal Plan 📅</h4>
-            <div className="page-actions mt-2">
-              <button className="btn btn-outline-primary" onClick={exportPlanCSV}>📄 Export CSV</button>
-              <button className="btn btn-outline-danger" onClick={exportPlanPDF}>📕 Export PDF</button>
-              <button className="btn btn-outline-success" onClick={sharePlanWhatsApp}>💬 Share on WhatsApp</button>
+          <div className="planning-exports" role="group" aria-labelledby="planner-export-heading">
+            <h3 id="planner-export-heading" className="planning-action-heading">Share Meal Plan 📅</h3>
+            <div className="page-actions">
+              <button className="btn btn-outline-secondary" onClick={exportPlanCSV}>📄 Export CSV</button>
+              <button className="btn btn-outline-secondary" onClick={exportPlanPDF}>📕 Export PDF</button>
+              <button className="btn btn-outline-secondary" onClick={sharePlanWhatsApp}>💬 Share on WhatsApp</button>
             </div>
           </div>
         </>
       )}
-      <button className="btn btn-success btn-lg mt-3 mb-5" onClick={requestGeneration}
-        disabled={busy || !planRecord.loaded || mealsLoading || !meals.length}>
-        🔄 Generate New Plan
-      </button>
       {showReplacement && (
         <div ref={replacementDialogRef} className="modal show d-block user-dialog" role="dialog" aria-modal="true"
           aria-labelledby="replace-plan-title" aria-describedby="replace-plan-description" tabIndex="-1"

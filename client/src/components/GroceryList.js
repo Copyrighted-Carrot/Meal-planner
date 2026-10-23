@@ -130,11 +130,12 @@ function GroceryList() {
   return <div className="page-surface grocery-page">
     <div className="page-heading mb-3">
       <h2>Grocery List 🛒</h2>
-      {savedList && <button className="btn btn-danger btn-sm" disabled={busy || view.conflict} onClick={deleteList}>Delete List</button>}
     </div>
-    <label htmlFor="grocery-week">Week beginning Monday</label>
-    <input id="grocery-week" type="date" className="form-control mb-2" value={weekStart} disabled={busy}
-      onChange={event => { if (event.target.value) selectWeek(event.target.value); }} />
+    <div className="planning-week-field mb-2">
+      <label htmlFor="grocery-week">Week beginning Monday</label>
+      <input id="grocery-week" type="date" className="form-control" value={weekStart} disabled={busy}
+        onChange={event => { if (event.target.value) selectWeek(event.target.value); }} />
+    </div>
     {(busy || waitingForList || waitingForPlan) && <div role="status" className="alert alert-info page-state">
       <p className="page-state-title">{waitingForList ? 'Loading your grocery list...' : waitingForPlan ? "Loading this week's plan..." : planRecord.saving ? "Saving this week's plan..." : 'Saving grocery changes...'}</p>
       <p>{waitingForList || waitingForPlan ? 'Checking the saved list and meal plan for the selected week.' : savedList ? 'Waiting for confirmation. Your saved items stay visible below.' : 'Please wait for this operation to finish.'}</p>
@@ -144,7 +145,7 @@ function GroceryList() {
         <p className="page-state-title">Grocery list needs attention.</p>
         <p className="page-state-detail">{view.error || planRecord.error}</p>
       </>}
-      <button className="btn btn-secondary btn-sm mb-2" disabled={busy} onClick={reload}>Reload this week</button>
+      <button className={`btn ${view.error || planRecord.error ? 'btn-secondary' : 'btn-outline-secondary'} mb-2`} disabled={busy} onClick={reload}>Reload this week</button>
     </div>
     {view.legacy.length > 0 && <div className="mb-2">
       <label htmlFor="legacy-grocery">Saved list</label>
@@ -154,10 +155,10 @@ function GroceryList() {
         {view.legacy.map(list => <option key={list._id} value={list._id}>Older undated list ({new Date(list.createdAt).toLocaleDateString()})</option>)}
       </select>
     </div>}
-    {(savedList || showEmptyList) && <div className={savedList ? 'card p-3 mb-4 bg-white shadow-sm' : 'alert page-state page-state-empty'}>
+    {(savedList || showEmptyList) && <div className={savedList ? 'card p-3 mb-3' : 'alert page-state page-state-empty'}>
       {savedList ? <div className="page-actions grocery-summary-actions">
         <span className="text-secondary grocery-summary">{legacyId ? 'Older undated list — not assigned to this week' : `Saved list for ${weekStart}`}</span>
-        <button className="btn btn-warning btn-sm" disabled={!canGenerate} onClick={generateList}>🔄 Regenerate from Current Plan</button>
+        <button className="btn btn-success" disabled={!canGenerate} onClick={generateList}>🔄 Regenerate from Current Plan</button>
       </div> : <>
         <p className="page-state-title">No saved list for this week.</p>
         <p>{weeklyPlan.length === 0 ? 'Create a meal plan for this week first.' : "Generate a grocery list from this week's saved meal plan."}</p>
@@ -167,17 +168,18 @@ function GroceryList() {
         </div>
       </>}
       {savedList?.weekStart === weekStart && savedList.sourcePlanRevision !== planRecord.revision && planRecord.loaded &&
-        <p role="status" className="text-warning">The saved plan has changed. Regenerate this list to use it.</p>}
+        <p role="status" className="alert alert-warning mt-3 mb-0">The saved plan has changed. Regenerate this list to use it.</p>}
+      {savedList && <div className="planning-exports" role="group" aria-labelledby="grocery-export-heading">
+        <h3 id="grocery-export-heading" className="planning-action-heading">Export &amp; share</h3>
+        <div className="page-actions">
+          <button className="btn btn-outline-secondary" disabled={!items.length || busy || view.conflict} onClick={exportCSV}>📄 Export CSV</button>
+          <button className="btn btn-outline-secondary" disabled={!items.length || busy || view.conflict} onClick={exportPDF}>📕 Export PDF</button>
+          <button className="btn btn-outline-secondary" disabled={!items.length || busy || view.conflict} onClick={shareWhatsApp}>💬 Share on WhatsApp</button>
+        </div>
+        <small className="d-block mt-2">Exports include the complete saved list, including checked items.</small>
+      </div>}
     </div>}
     {savedList && <>
-      <div className="card p-2 bg-light mb-3">
-        <div className="page-actions grocery-export-actions">
-          <button className="btn btn-outline-primary btn-sm" disabled={!items.length || busy || view.conflict} onClick={exportCSV}>📄 CSV</button>
-          <button className="btn btn-outline-danger btn-sm" disabled={!items.length || busy || view.conflict} onClick={exportPDF}>📕 PDF</button>
-          <button className="btn btn-outline-success btn-sm" disabled={!items.length || busy || view.conflict} onClick={shareWhatsApp}>💬 WhatsApp</button>
-        </div>
-        <small>Exports include the complete saved list, including checked items.</small>
-      </div>
       <input type="text" className="form-control mb-3" aria-label="Search ingredients" placeholder="Search ingredients..." value={search} onChange={event => setSearch(event.target.value)} />
       {filteredList.length === 0 ? <div className="alert page-state page-state-empty">
         <p className="page-state-title">{items.length ? 'No matching ingredients.' : 'No ingredients found.'}</p>
@@ -192,6 +194,9 @@ function GroceryList() {
         </li>)}
       </ul>}
       {filteredList.length > 5 && <button className="btn btn-secondary mt-3" onClick={() => setShowAll(!showAll)}>{showAll ? '▲ Show Less' : '▼ Show More'}</button>}
+      <div className="page-actions grocery-list-management" role="group" aria-label="List management">
+        <button className="btn btn-outline-danger" disabled={busy || view.conflict} onClick={deleteList}>Delete List</button>
+      </div>
     </>}
   </div>;
 }

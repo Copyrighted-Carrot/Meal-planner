@@ -15,6 +15,36 @@
   white-space: normal;
 }
 
+.planner-page .planning-week-controls {
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.planning-week-field,
+.planning-week-controls > .planning-week-field {
+  flex: 1 1 14rem;
+  min-width: 0;
+  max-width: 22rem;
+}
+
+.planning-week-field label {
+  display: block;
+  margin-bottom: var(--rustic-space-small);
+}
+
+.planning-exports,
+.grocery-list-management {
+  margin-top: 1rem;
+  padding-top: var(--rustic-space-gap);
+  border-top: 1px solid var(--rustic-paper-edge);
+}
+
+.planning-action-heading {
+  margin-bottom: var(--rustic-space-small);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
 .planner-table {
   width: 100%;
   table-layout: fixed;
@@ -43,11 +73,6 @@
 .grocery-summary {
   flex: 1 1 14rem;
   min-width: 0;
-}
-
-.grocery-export-actions {
-  justify-content: center;
-  margin-bottom: 0.5rem;
 }
 
 .grocery-page .grocery-row {

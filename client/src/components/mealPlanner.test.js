@@ -269,3 +269,24 @@ test('the single responsive table keeps every meal associated with its day and s
         });
     });
 });
+
+test('generation stays with the selected week before the plan, while exports are secondary utilities', async () => {
+    respond = loadSaved;
+    await mount();
+    const controls = container.querySelector('[role="group"][aria-label="Plan this week"]');
+    const generate = button('Generate New Plan');
+    expect(controls.contains(container.querySelector('#plan-week'))).toBe(true);
+    expect(controls.contains(generate)).toBe(true);
+    expect(generate.classList.contains('btn-success')).toBe(true);
+    expect([...container.querySelectorAll('button')].filter(item => item.textContent.includes('Generate New Plan'))).toHaveLength(1);
+    expect(generate.compareDocumentPosition(container.querySelector('table')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const exports = container.querySelector('[role="group"][aria-labelledby="planner-export-heading"]');
+    expect(document.getElementById(exports.getAttribute('aria-labelledby')).textContent).toContain('Share Meal Plan');
+    ['Export CSV', 'Export PDF', 'Share on WhatsApp'].forEach(label => {
+        const action = button(label);
+        expect(exports.contains(action)).toBe(true);
+        expect(action.classList.contains('btn-outline-secondary')).toBe(true);
+        expect(action.classList.contains('btn-danger')).toBe(false);
+        expect(action.classList.contains('btn-outline-danger')).toBe(false);
+    });
+});

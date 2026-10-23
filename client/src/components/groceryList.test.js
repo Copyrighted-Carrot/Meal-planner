@@ -123,6 +123,7 @@ test('direct Grocery load fetches its week and plan; generation sends only autho
     expect(requests.filter(config => config.url === '/plan' || config.url === '/grocery').every(config => config.params.weekStart === currentWeek)).toBe(true);
     expect(requests.some(config => config.url === '/plan')).toBe(true);
     expect(button('Generate List from Weekly Plan').disabled).toBe(false);
+    expect(button('Generate List from Weekly Plan').classList.contains('btn-success')).toBe(true);
     await click(button('Generate List from Weekly Plan'));
     const posted = requests.find(config => config.method === 'post');
     expect(posted.headers.get('x-auth-token')).toBe('grocery-account-a-fixture');
@@ -187,6 +188,7 @@ test('load failure is visible and retry loads the saved list instead of presenti
     expect(container.querySelector('[role="alert"] .page-state-detail').textContent).toBe('Groceries unavailable');
     expect(container.textContent).not.toContain('No saved list for this week');
     expect(button('Generate List from Weekly Plan')).toBeUndefined();
+    expect(button('Reload this week').classList.contains('btn-secondary')).toBe(true);
     respond = defaultResponse;
     await click(button('Reload this week'));
     expect(container.textContent).toContain('A Carrots: 3 kg');
@@ -258,6 +260,37 @@ test('delete targets the displayed list and revision and clears it only after co
     expect(deleted.params).toEqual({ revision: 2 });
     expect(container.textContent).not.toContain('A Carrots');
     expect(container.textContent).toContain('No saved list for this week');
+});
+
+test('generation is primary, exports are grouped secondary actions, and Delete remains explicitly destructive', async () => {
+    await mount();
+    expect(button('Regenerate from Current Plan').classList.contains('btn-success')).toBe(true);
+    expect(button('Reload this week').classList.contains('btn-outline-secondary')).toBe(true);
+    const exports = container.querySelector('[role="group"][aria-labelledby="grocery-export-heading"]');
+    expect(document.getElementById(exports.getAttribute('aria-labelledby')).textContent).toBe('Export & share');
+    ['Export CSV', 'Export PDF', 'Share on WhatsApp'].forEach(label => {
+        const action = button(label);
+        expect(exports.contains(action)).toBe(true);
+        expect(action.classList.contains('btn-outline-secondary')).toBe(true);
+        expect(action.classList.contains('btn-danger')).toBe(false);
+        expect(action.classList.contains('btn-outline-danger')).toBe(false);
+    });
+    const management = container.querySelector('[role="group"][aria-label="List management"]');
+    expect(management.contains(button('Delete List'))).toBe(true);
+    expect(exports.contains(button('Delete List'))).toBe(false);
+    expect(button('Delete List').classList.contains('btn-outline-danger')).toBe(true);
+    expect(button('Delete List').classList.contains('btn-success')).toBe(false);
+});
+
+test('canceling the relocated Delete action keeps the saved list and sends no delete request', async () => {
+    await mount();
+    window.confirm.mockReturnValue(false);
+    const before = clone(lists.get(`A:${currentWeek}`));
+    await click(button('Delete List'));
+    expect(window.confirm).toHaveBeenCalledTimes(1);
+    expect(requests.filter(config => config.method === 'delete')).toHaveLength(0);
+    expect(lists.get(`A:${currentWeek}`)).toEqual(before);
+    expect(container.textContent).toContain('A Carrots: 3 kg');
 });
 
 test('CSV, PDF and share export every confirmed item despite search and the five-row display limit', async () => {
