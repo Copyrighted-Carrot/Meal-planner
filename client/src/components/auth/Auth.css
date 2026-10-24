@@ -54,7 +54,7 @@
     max-width: 25rem;
     min-width: 0;
     min-height: 6rem;
-    margin: .5rem auto 1rem;
+    margin: 0 auto;
     isolation: isolate;
 }
 
@@ -122,7 +122,7 @@
 .auth-header .page-title {
     font-size: 1.5rem;
     font-weight: 700;
-    margin: .5rem 0 0;
+    margin: 0;
 }
 
 /* Input Fields - "Carved Slots" */
@@ -290,7 +290,7 @@
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     margin-top: 0;
     /* Reduced from 10px to shift up further 0.2 inch */
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .carrot-btn:hover {
@@ -322,7 +322,7 @@
 
 .rustic-link {
     display: inline-block;
-    margin-top: 10px;
+    margin-top: 0;
     color: #5d4037;
     font-weight: bold;
     text-decoration: none;
@@ -336,7 +336,7 @@
 
 /* Alert Box */
 .rustic-alert {
-    margin-bottom: 15px;
+    margin-bottom: 1rem;
     font-weight: bold;
     font-size: 0.9rem;
 }
