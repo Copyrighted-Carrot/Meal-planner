@@ -125,6 +125,34 @@ afterEach(async () => {
     jest.restoreAllMocks();
 });
 
+test('Show/Hide password names the existing toggle without submitting or changing the entered value', async () => {
+    setSessionToken(null);
+    await mount('/login');
+    await fillAuth();
+    const input = container.querySelector('input[name="password"]');
+    const toggle = container.querySelector('[aria-label="Show password"]');
+    expect(toggle.type).toBe('button');
+    expect(toggle.textContent).toBe('Show');
+    expect(input.type).toBe('password');
+    toggle.focus();
+    await act(async () => toggle.click());
+    expect(input.type).toBe('text');
+    expect(toggle.getAttribute('aria-label')).toBe('Hide password');
+    expect(toggle.getAttribute('title')).toBe('Hide password');
+    expect(toggle.textContent).toBe('Hide');
+    expect(document.activeElement).toBe(toggle);
+    expect(input.value).toBe('fixture-password');
+    await act(async () => toggle.click());
+    expect(input.type).toBe('password');
+    expect(toggle.getAttribute('aria-label')).toBe('Show password');
+    expect(input.value).toBe('fixture-password');
+    expect(writes()).toHaveLength(0);
+    await act(async () => dispatchSubmit());
+    expect(writes()).toHaveLength(1);
+    expect(JSON.parse(writes()[0].data)).toEqual({ email: 'form@example.invalid', password: input.value });
+    expect(location.pathname).toBe('/');
+});
+
 test.each([[401, 'Invalid Credentials'], [503, 'Sign-in service unavailable']])('Login keeps a visible error for status %s and retains entered values', async (code, message) => {
     jest.useFakeTimers();
     setSessionToken(null);

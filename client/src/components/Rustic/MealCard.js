@@ -93,7 +93,7 @@ function MealCard({ meal, onEdit, onDelete, selectionMode, isSelected, onToggle 
             )}
 
             {/* Frame Background */}
-            <img src={frameImage} alt="Frame" className="rustic-card-frame-image" />
+            <img src={frameImage} alt="" className="rustic-card-frame-image" />
 
             {/* Content sets the frame height so short recipes stay compact. */}
             <div className="rustic-card-content">

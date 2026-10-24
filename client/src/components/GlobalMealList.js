@@ -51,11 +51,11 @@ function GlobalMealList({ meals: userMeals, onImport }) {
 
     return (
         <div className="public-meal-library mt-4">
-            <h2 className="text-center mb-4">Public Meal Library 📚</h2>
-            <p className="text-center text-muted">Browse and add meals to your personal collection.</p>
+            <h2 className="text-center mb-4">Browse Recipes 📚</h2>
+            <p className="text-center text-muted">Add recipes to Available Meals to use them in your plans.</p>
 
             {loading ? <div role="status" className="alert alert-info page-state">
-                <p className="page-state-title">Loading Library... 📚</p>
+                <p className="page-state-title">Loading recipes... 📚</p>
                 <p>Checking for recipes you can add to your collection.</p>
             </div> : loadError ? (
                 <div role="alert" className="alert alert-danger page-state">
@@ -66,8 +66,8 @@ function GlobalMealList({ meals: userMeals, onImport }) {
             ) : loadSucceeded ? <div className="public-meal-grid">
                 {globalMeals.length === 0 ? (
                     <div className="public-meal-empty alert page-state page-state-empty">
-                        <p className="page-state-title">No global meals found. Please check back later.</p>
-                        <p>The library loaded successfully, but has no recipes to browse yet.</p>
+                        <p className="page-state-title">No recipes to browse yet.</p>
+                        <p>The library is empty. Please check back later.</p>
                     </div>
                 ) : (
                     globalMeals.map((meal) => (
@@ -86,7 +86,7 @@ function GlobalMealList({ meals: userMeals, onImport }) {
                                         onClick={() => handleAddToMyMeals(meal._id)}
                                         disabled={addingId === meal._id}
                                     >
-                                        {addingId === meal._id ? "Adding..." : "➕ Add to My Meals"}
+                                        {addingId === meal._id ? "Adding..." : "➕ Add to Available Meals"}
                                     </button>
                                 </div>
                             </div>

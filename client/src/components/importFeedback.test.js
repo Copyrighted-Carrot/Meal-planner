@@ -56,18 +56,19 @@ test('Browse distinguishes the initial loading state from a loaded recipe librar
     const request = deferred();
     api.defaults.adapter = jest.fn(config => request.promise.then(data => response(config, data)));
     await act(async () => root.render(<GlobalMealList meals={[]} onImport={jest.fn()} />));
-    expect(text()).toMatch(/Loading Library/);
-    expect(text()).not.toMatch(/No global meals found|Could not load/);
+    expect(container.querySelector('h2').textContent).toContain('Browse Recipes');
+    expect(text()).toMatch(/Loading recipes/);
+    expect(text()).not.toMatch(/No recipes to browse yet|Could not load/);
     await act(async () => request.resolve([meal]));
     expect(text()).toContain(meal.name);
-    expect(text()).not.toMatch(/Loading Library|No global meals found|Could not load/);
+    expect(text()).not.toMatch(/Loading recipes|No recipes to browse yet|Could not load/);
 });
 
 test('Browse shows a useful empty state only after a successful empty response', async () => {
     api.defaults.adapter = jest.fn(async config => response(config, []));
     await act(async () => root.render(<GlobalMealList meals={[]} onImport={jest.fn()} />));
-    expect(text()).toContain('No global meals found. Please check back later.');
-    expect(text()).not.toMatch(/Be the first to publish|Loading Library|Could not load/);
+    expect(text()).toContain('No recipes to browse yet.');
+    expect(text()).not.toMatch(/Be the first to publish|Loading recipes|Could not load/);
     expect(button(/Retry/)).toBeUndefined();
 });
 
@@ -78,10 +79,10 @@ test('Browse failed loading is not reported as empty and Retry loads the library
         .mockImplementationOnce(config => retry.promise.then(data => response(config, data)));
     await act(async () => root.render(<GlobalMealList meals={[]} onImport={jest.fn()} />));
     expect(container.querySelector('[role="alert"]').textContent).toContain('Could not load the recipe library. Please try again.');
-    expect(text()).not.toMatch(/No global meals found/);
+    expect(text()).not.toMatch(/No recipes to browse yet/);
     await act(async () => click(/Retry/));
-    expect(text()).toMatch(/Loading Library/);
-    expect(text()).not.toMatch(/No global meals found|Could not load/);
+    expect(text()).toMatch(/Loading recipes/);
+    expect(text()).not.toMatch(/No recipes to browse yet|Could not load/);
     await act(async () => retry.resolve([meal]));
     expect(text()).toContain(meal.name);
     expect(api.defaults.adapter).toHaveBeenCalledTimes(2);
@@ -99,9 +100,35 @@ test.each(['expired', 'switched'])('Browse does not show successful-empty feedba
             pending.resolve();
         });
     }
-    expect(text()).not.toMatch(/No global meals found|Could not load the recipe library/);
+    expect(text()).not.toMatch(/No recipes to browse yet|Could not load the recipe library/);
     expect(container.querySelector('[role="alert"]')).toBeNull();
     expect(button(/Retry/)).toBeUndefined();
+});
+
+test('Add to Available Meals still copies the selected recipe once and refreshes before success', async () => {
+    const pending = deferred();
+    const refresh = deferred();
+    const onImport = jest.fn(() => refresh.promise);
+    api.defaults.adapter = jest.fn(config => config.method === 'get'
+        ? Promise.resolve(response(config, [meal])) : pending.promise.then(() => response(config)));
+    await act(async () => root.render(<GlobalMealList meals={[]} onImport={onImport} />));
+    const add = button(/Add to Available Meals/);
+    add.focus();
+    await act(async () => add.click());
+    expect(add.textContent).toBe('Adding...');
+    expect(add.disabled).toBe(true);
+    const writes = api.defaults.adapter.mock.calls.map(([config]) => config).filter(config => config.method === 'post');
+    expect(writes).toHaveLength(1);
+    expect(writes[0].url).toBe('/meals/copy/public-soup');
+    expect(writes[0].data).toBeUndefined();
+    expect(onImport).not.toHaveBeenCalled();
+    await act(async () => pending.resolve());
+    expect(onImport).toHaveBeenCalledTimes(1);
+    expect(window.alert).not.toHaveBeenCalled();
+    await act(async () => refresh.resolve());
+    expect(window.alert).toHaveBeenCalledTimes(1);
+    expect(add.textContent).toContain('Add to Available Meals');
+    expect(add.disabled).toBe(false);
 });
 
 test('Smart Fridge secondary controls preserve close, back and keyboard focus behavior', async () => {

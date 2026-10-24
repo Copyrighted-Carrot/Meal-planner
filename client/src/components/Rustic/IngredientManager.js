@@ -172,7 +172,7 @@ function IngredientManager({ ingredients, onChange }) {
                         textDecoration: 'underline'
                     }}
                 >
-                    {isBulkMode ? "Switch to Single Entry" : "📝 Paste Recipe List"}
+                    {isBulkMode ? "Add one ingredient" : "📝 Paste ingredient list"}
                 </button>
             </div>
 
@@ -192,7 +192,7 @@ function IngredientManager({ ingredients, onChange }) {
                     /* BULK MODE */
                     <div style={{ position: 'relative', zIndex: 1, padding: '10px' }}>
                         <label className="recipe-field-label" htmlFor="ingredient-paste-list">Ingredient list</label>
-                        <p id="ingredient-paste-help" className="recipe-field-help">Paste ingredients on separate lines or separated by commas, then choose Process List. Check the added ingredients before saving.</p>
+                        <p id="ingredient-paste-help" className="recipe-field-help">Paste ingredients on separate lines or separated by commas, then choose Add ingredients. Check the added ingredients before saving.</p>
                         <textarea
                             id="ingredient-paste-list"
                             aria-describedby="ingredient-paste-help"
@@ -227,7 +227,7 @@ function IngredientManager({ ingredients, onChange }) {
                                 cursor: isParsing ? 'wait' : 'pointer'
                             }}
                         >
-                            {isParsing ? "✨ Parsing with AI..." : "Process List 🥕"}
+                            {isParsing ? "Reading ingredients..." : "Add ingredients 🥕"}
                         </button>
                     </div>
                 ) : (
@@ -373,6 +373,8 @@ function IngredientManager({ ingredients, onChange }) {
 
                             <button
                                 type="button"
+                                aria-label={`Remove ingredient: ${formatIngredient(chip)}`}
+                                title="Remove ingredient"
                                 onClick={(e) => { e.stopPropagation(); handleDelete(index); }}
                                 style={{
                                     border: 'none',

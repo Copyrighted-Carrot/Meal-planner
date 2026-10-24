@@ -32,6 +32,7 @@ afterEach(async () => {
 
 test('long recipe names and existing comparison metadata remain complete', async () => {
     await renderMeal();
+    expect(container.querySelector('.rustic-card-frame-image').getAttribute('alt')).toBe('');
     expect(container.querySelector('h3').textContent).toBe(meal.name);
     expect(container.querySelector('.rustic-meal-category').textContent).toBe('Category: Dinner');
     expect([...container.querySelectorAll('.rustic-badge')].map(badge => badge.textContent.trim()))

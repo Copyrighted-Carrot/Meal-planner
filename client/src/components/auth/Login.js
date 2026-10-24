@@ -149,8 +149,10 @@ const Login = () => {
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="rustic-eye-btn"
+                                        aria-label={`${showPassword ? "Hide" : "Show"} password`}
+                                        title={`${showPassword ? "Hide" : "Show"} password`}
                                     >
-                                        {showPassword ? "🙈" : "👁️"}
+                                        {showPassword ? "Hide" : "Show"}
                                     </button>
                                 </div>
                             </div>

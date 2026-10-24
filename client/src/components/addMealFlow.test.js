@@ -217,16 +217,22 @@ test('visible field labels and ingredient Enter keep entry values and prevent ac
 
 test('paste-list guidance keeps the existing provider request and ingredient result', async () => {
     await mount();
-    await click([...container.querySelectorAll('button')].find(button => /Paste Recipe List/.test(button.textContent)));
+    await click([...container.querySelectorAll('button')].find(button => /Paste ingredient list/.test(button.textContent)));
     const input = container.querySelector('.ingredient-manager textarea');
     expect(input.labels.length).toBeGreaterThan(0);
     const help = input.getAttribute('aria-describedby').split(/\s+/).map(id => container.querySelector(`#${id}`).textContent).join(' ');
     expect(help).toMatch(/line|comma/i);
+    expect(help).toContain('choose Add ingredients');
+    expect([...container.querySelectorAll('button')].some(button => button.textContent === 'Add one ingredient')).toBe(true);
     const list = '1 cup rice\n500 g carrots';
     await change(input, list);
-    api.post.mockResolvedValueOnce({ data: [{ qty: '1', unit: 'cup', name: 'rice' }, { qty: '500', unit: 'g', name: 'carrots' }] });
-    await click([...container.querySelectorAll('button')].find(button => /Process List/.test(button.textContent)));
+    let finish;
+    api.post.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+    await click([...container.querySelectorAll('button')].find(button => /Add ingredients/.test(button.textContent)));
+    const pending = [...container.querySelectorAll('button')].find(button => button.textContent === 'Reading ingredients...');
+    expect(pending.disabled).toBe(true);
     expect(api.post.mock.calls).toEqual([['/ai/parse', { text: list }]]);
+    await act(async () => finish({ data: [{ qty: '1', unit: 'cup', name: 'rice' }, { qty: '500', unit: 'g', name: 'carrots' }] }));
     expect(draftState.ingredients).toBe('1 cup rice, 500 g carrots');
     expect(container.querySelector('.ingredient-manager textarea')).toBeNull();
     expect(choices().every(element => element.getAttribute('aria-pressed') === 'false')).toBe(true);

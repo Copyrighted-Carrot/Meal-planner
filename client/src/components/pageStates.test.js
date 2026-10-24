@@ -81,6 +81,8 @@ test('Available Meals distinguishes initial loading from genuine empty and offer
     const pending = deferred();
     respond = config => pending.promise.then(data => reply(config, data));
     await mount('meals');
+    expect(container.querySelector('h1').textContent.trim()).toBe('Available Meals');
+    expect(container.querySelector('h1 [aria-hidden="true"] img')).not.toBeNull();
     expect(status().textContent).toContain('Loading your meals');
     expect(alert()).toBeNull();
     expect(emptyRegion()).toBeNull();
@@ -140,19 +142,19 @@ test('Browse loading and failed states stay distinct from empty and Retry still 
     respond = config => config.url === '/meals/global'
         ? pending.promise.then(data => reply(config, data)) : defaultResponse(config);
     await mount('browse');
-    expect(status().textContent).toContain('Loading Library');
+    expect(status().textContent).toContain('Loading recipes');
     expect(emptyRegion()).toBeNull();
     const libraryRequest = requests.find(config => config.url === '/meals/global');
     await act(async () => pending.reject(failure(libraryRequest, 'Library unavailable')));
     expect(alert().textContent).toContain('Could not load the recipe library. Please try again.');
     expect(emptyRegion()).toBeNull();
-    expect(text()).not.toContain('No global meals found');
+    expect(text()).not.toContain('No recipes to browse yet');
     respond = defaultResponse;
     await click(button('Retry'));
     expect(count('/meals/global')).toBe(2);
     expect(alert()).toBeNull();
     expect(emptyRegion()).not.toBeNull();
-    expect(text()).toContain('No global meals found. Please check back later.');
+    expect(text()).toContain('No recipes to browse yet.');
 });
 
 test('Planner waits for the initial plan request before showing a genuinely empty week', async () => {

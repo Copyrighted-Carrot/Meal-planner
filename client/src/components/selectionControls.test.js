@@ -136,7 +136,11 @@ test('editing quantity, unit and name keeps the existing string data flow and ex
 
 test('ingredient delete still works without opening the edit control', async () => {
     await mount(<Ingredients initial="1 cup rice, 2 pc carrots" />);
-    await click([...container.querySelector('.ingredient-chip').querySelectorAll('button')].find(button => button.textContent === '×'));
+    const remove = container.querySelector('[aria-label="Remove ingredient: 1 cup rice"]');
+    expect(remove.getAttribute('title')).toBe('Remove ingredient');
+    remove.focus();
+    expect(document.activeElement).toBe(remove);
+    await click(remove);
     expect(onIngredientsChange.mock.calls).toEqual([['2 pc carrots']]);
     expect(editor()).toBeNull();
     expect(editButton().getAttribute('aria-label')).toBe('Edit ingredient: 2 pc carrots');
