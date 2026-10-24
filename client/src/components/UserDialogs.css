@@ -89,7 +89,7 @@
 
 .recipe-preview-actions,
 .recipe-crop-controls { padding: var(--rustic-space-gap); }
-.recipe-crop-controls > div:first-child > span { flex-shrink: 0; }
+.recipe-crop-controls > div:first-child > label { flex-shrink: 0; }
 .recipe-preview-dialog > img,
 .recipe-crop-stage {
     border: 3px solid var(--rustic-wood);

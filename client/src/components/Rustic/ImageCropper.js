@@ -70,14 +70,14 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
                 gap: '15px',
             }}>
                 <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--rustic-ink)' }}>
-                    <span style={{ fontWeight: 'bold' }}>Zoom:</span>
+                    <label htmlFor="recipe-image-zoom" style={{ fontWeight: 'bold' }}>Image zoom</label>
                     <input
+                        id="recipe-image-zoom"
                         type="range"
                         value={zoom}
                         min={1}
                         max={3}
                         step={0.1}
-                        aria-label="Zoom"
                         onChange={(e) => setZoom(Number(e.target.value))}
                         style={{ width: '100%', cursor: 'pointer' }}
                     />
@@ -110,7 +110,7 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel }) => {
                             minWidth: '120px'
                         }}
                     >
-                        ✂️ Crop & Save
+                        ✂️ Use cropped image
                     </button>
                 </div>
             </div>
