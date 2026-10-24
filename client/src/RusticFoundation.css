@@ -1,5 +1,6 @@
 /* Shared user-facing finishes. Manager screens do not use .app-shell. */
 .app-shell,
+.app-shell ~ .carrot-container,
 .recipe-preview-overlay {
   --rustic-font-body: 'Nunito', sans-serif;
   --rustic-ink: #4e342e;

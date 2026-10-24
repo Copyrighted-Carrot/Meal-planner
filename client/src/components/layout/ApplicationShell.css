@@ -14,7 +14,6 @@
   min-width: 0;
   max-width: 90rem;
   margin-inline: auto;
-  padding-bottom: 9rem;
   overflow-wrap: anywhere;
 }
 
@@ -45,28 +44,48 @@
 .page-heading > *, .page-actions > * { min-width: 0; max-width: 100%; }
 .page-actions .btn { white-space: normal; overflow-wrap: anywhere; }
 
-/* Bound the existing companion overlays to the user shell, including short screens. */
+/* Companions have their own flow space; opening a panel never covers the task. */
+.app-shell ~ .carrot-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--rustic-space-gap);
+  width: min(32rem, calc(100% - 1.5rem));
+  margin: 0 auto 1.5rem;
+  padding: 1.5rem var(--rustic-space-gap);
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.app-shell ~ .carrot-container > :is(.carrot-guide, .strawberry-guide, .carrot-menu, .carrot-quiz, .thought-bubble) {
+  position: static;
+  inset: auto;
+  pointer-events: auto;
+}
+
+.app-shell ~ .carrot-container :is(.carrot-guide, .strawberry-guide) {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
 .app-shell ~ .carrot-container :is(.carrot-menu, .carrot-quiz, .thought-bubble) {
+  flex: 1 1 15rem;
   min-width: 0;
-  width: min(20rem, calc(100vw - 1.5rem));
-  max-width: calc(100vw - 1.5rem);
-  max-height: calc(100dvh - 8rem);
-  overflow-y: auto;
+  max-width: min(20rem, 100%);
   overflow-wrap: anywhere;
-  left: .75rem;
-  bottom: 7rem;
 }
 .app-shell ~ .carrot-container :is(.carrot-menu, .carrot-quiz) button { margin-inline: 0; white-space: normal; }
+.app-shell ~ .carrot-container :focus-visible { outline: 3px solid var(--rustic-focus); outline-offset: 4px; }
 
 @media (max-width: 69.999rem) {
   .app-shell ~ .carrot-container :is(.carrot-guide, .strawberry-guide) {
     width: 4.5rem;
     max-height: 6rem;
     object-fit: contain;
-    bottom: .75rem;
-    left: .75rem;
   }
-  .app-shell--public .rustic-auth-container { padding-bottom: 8rem; }
 }
 
 /* A 15rem signpost and a useful recipe workspace fit side by side here. */
@@ -78,8 +97,7 @@
   .kitchen-navigation .greeting-plank { width: 100%; }
   .kitchen-navigation .kitchen-menu-toggle { display: none; }
   .kitchen-navigation-links, .kitchen-navigation.is-open .kitchen-navigation-links { display: grid; grid-template-columns: minmax(0, 1fr); }
-  .app-shell:not(.app-shell--public) ~ .carrot-container :is(.carrot-guide, .strawberry-guide) { left: auto; right: 5rem; max-height: 7rem; object-fit: contain; }
-  .app-shell:not(.app-shell--public) ~ .carrot-container :is(.carrot-menu, .carrot-quiz, .thought-bubble) { left: auto; right: 1.5rem; bottom: 10rem; max-height: calc(100dvh - 11rem); }
+  .app-shell:not(.app-shell--public) ~ .carrot-container :is(.carrot-guide, .strawberry-guide) { max-height: 7rem; object-fit: contain; }
 }
 
 @media (max-width: 30rem) {
