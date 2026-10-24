@@ -44,6 +44,30 @@ test('navigation preserves all destinations and closes after choosing a route', 
   expect(container.querySelector('a[aria-current="page"]').textContent).toBe('Meal Planner');
 });
 
+test.each([
+  ['/', '/'],
+  ['/add', '/'],
+  ['/available-meals', '/available-meals'],
+  ['/browse', '/browse'],
+  ['/meal-planner', '/meal-planner'],
+  ['/grocery-list', '/grocery-list'],
+  ['/meal-planner?view=week#planner-heading', '/meal-planner'],
+  [{ pathname: '/add', state: { mealId: 'fixture-edit-meal' } }, '/'],
+])('direct entry %j marks only the existing destination %s as current', async (entry, href) => {
+  await mount(entry);
+  const current = [...container.querySelectorAll('nav a[aria-current="page"]')];
+  expect(current).toHaveLength(1);
+  expect(current[0].getAttribute('href')).toBe(href);
+  expect([...container.querySelectorAll('nav a.active')]).toEqual(current);
+  expect(container.querySelectorAll('nav a:not([aria-current])')).toHaveLength(4);
+});
+
+test.each(['/available-meals/fixture', '/browse/fixture'])('unmatched nested path %s does not invent a parent active destination', async route => {
+  await mount(route);
+  expect(container.querySelector('nav a[aria-current]')).toBeNull();
+  expect(container.querySelector('nav a.active')).toBeNull();
+});
+
 test('logout still invokes the existing session action', async () => {
   const logout = jest.fn(); await mount('/', true, logout);
   await act(async () => container.querySelector('.logout').click());

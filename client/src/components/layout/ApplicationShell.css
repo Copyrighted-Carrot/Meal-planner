@@ -29,6 +29,13 @@
 .kitchen-navigation .sidebar-btn { width: 100%; min-width: 0; }
 .kitchen-navigation .sidebar-btn > span:first-child { flex-shrink: 0; }
 .kitchen-navigation .sidebar-btn > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+/* The current section stays marked independently of hover or keyboard focus. */
+.kitchen-navigation .sidebar-btn[aria-current="page"] > span:last-child {
+  text-decoration-line: underline;
+  text-decoration-color: var(--rustic-paper);
+  text-decoration-thickness: 3px;
+  text-underline-offset: .2em;
+}
 .kitchen-navigation .kitchen-menu-toggle { width: auto; justify-content: center; }
 .kitchen-navigation-links { display: none; gap: .75rem; padding-top: .75rem; }
 .kitchen-navigation.is-open .kitchen-navigation-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
